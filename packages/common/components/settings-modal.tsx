@@ -2,17 +2,18 @@
 import { useMcpToolsStore } from '@repo/common/store';
 import { Alert, AlertDescription, DialogFooter } from '@repo/ui';
 import { Button } from '@repo/ui/src/components/button';
-import { IconBolt, IconBoltFilled, IconKey, IconSettings2, IconTrash } from '@tabler/icons-react';
+import { IconBolt, IconBoltFilled, IconCpu, IconDatabase, IconKey, IconSettings2, IconTrash } from '@tabler/icons-react';
 
 import { Badge, Dialog, DialogContent, Input } from '@repo/ui';
 
 import { useChatEditor } from '@repo/common/hooks';
 import moment from 'moment';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ApiKeys, useApiKeysStore } from '../store/api-keys.store';
 import { SETTING_TABS, useAppStore } from '../store/app.store';
-import { useChatStore } from '../store/chat.store';
+import { useChatStore, useLocalAIStore } from '../store';
 import { ChatEditor } from './chat-input';
+import { LocalAISettings } from './local-ai/local-ai-settings';
 import { BYOKIcon, ToolIcon } from './icons';
 
 export const SettingsModal = () => {
@@ -40,11 +41,18 @@ export const SettingsModal = () => {
             key: SETTING_TABS.API_KEYS,
             component: <ApiKeySettings />,
         },
-        // {
-        //     title: 'MCP Tools',
-        //     key: SETTING_TABS.MCP_TOOLS,
-        //     component: <MCPSettings />,
-        // },
+        {
+            icon: <IconCpu size={16} strokeWidth={2} className="text-muted-foreground" />,
+            title: 'Local AI',
+            key: SETTING_TABS.LOCAL_AI,
+            component: <LocalAISettings />,
+        },
+        {
+            icon: <IconDatabase size={16} strokeWidth={2} className="text-muted-foreground" />,
+            title: 'Storage',
+            key: SETTING_TABS.STORAGE,
+            component: <StorageSettings />,
+        },
     ];
 
     return (
@@ -480,6 +488,126 @@ export const PersonalizationSettings = () => {
             </p>
             <div className=" shadow-subtle-sm border-border mt-2 rounded-lg border p-3">
                 <ChatEditor editor={editor} />
+            </div>
+        </div>
+    );
+};
+
+export const StorageSettings = () => {
+    const clearAllThreads = useChatStore(state => state.clearAllThreads);
+    const clearDownloadedModels = useLocalAIStore(state => state.clearDownloadedModels);
+    const [storageUsage, setStorageUsage] = useState({ used: 0, quota: 0 });
+    const [isClearing, setIsClearing] = useState(false);
+
+    const estimateStorage = useCallback(async () => {
+        try {
+            if (navigator.storage?.estimate) {
+                const est = await navigator.storage.estimate();
+                setStorageUsage({
+                    used: est.usage || 0,
+                    quota: est.quota || 0,
+                });
+            }
+        } catch {
+            // Storage API not available
+        }
+    }, []);
+
+    useEffect(() => {
+        estimateStorage();
+    }, [estimateStorage]);
+
+    const clearModelCache = useCallback(async () => {
+        setIsClearing(true);
+        try {
+            // Clear IndexedDB databases used by web-llm
+            const dbs = await indexedDB.databases?.();
+            if (dbs) {
+                for (const db of dbs) {
+                    if (db.name?.includes('webllm') || db.name?.includes('mlc')) {
+                        indexedDB.deleteDatabase(db.name);
+                    }
+                }
+            }
+            clearDownloadedModels();
+            await estimateStorage();
+        } catch {
+            console.error('Failed to clear model cache');
+        } finally {
+            setIsClearing(false);
+        }
+    }, [clearDownloadedModels, estimateStorage]);
+
+    const handleFactoryReset = () => {
+        if (confirm('This will clear all data including chat history, API keys, and settings. Are you sure?')) {
+            clearAllThreads();
+            clearDownloadedModels();
+            localStorage.clear();
+            window.location.reload();
+        }
+    };
+
+    const usedMB = (storageUsage.used / 1024 / 1024).toFixed(1);
+    const quotaMB = (storageUsage.quota / 1024 / 1024).toFixed(1);
+    const usagePercent = storageUsage.quota > 0 ? (storageUsage.used / storageUsage.quota) * 100 : 0;
+
+    return (
+        <div className="flex flex-col gap-6">
+            <div className="flex flex-col">
+                <h2 className="flex items-center gap-1 text-base font-medium">Storage</h2>
+                <p className="text-muted-foreground text-xs">
+                    Manage browser storage used by the app.
+                </p>
+            </div>
+
+            {/* Browser Storage Usage */}
+            {storageUsage.quota > 0 && (
+                <div className="flex flex-col gap-2">
+                    <span className="text-sm font-medium">Browser Storage</span>
+                    <div className="bg-secondary h-2 w-full overflow-hidden rounded-full">
+                        <div
+                            className="bg-brand h-full rounded-full transition-all"
+                            style={{ width: `${Math.min(100, usagePercent)}%` }}
+                        />
+                    </div>
+                    <span className="text-muted-foreground text-xs">
+                        {usedMB} MB / {quotaMB} MB used
+                    </span>
+                </div>
+            )}
+
+            <div className="flex flex-col gap-2">
+                <Button
+                    variant="bordered"
+                    size="sm"
+                    rounded="full"
+                    className="justify-start"
+                    onClick={clearAllThreads}
+                >
+                    <IconTrash size={14} strokeWidth={2} />
+                    Clear Chat History
+                </Button>
+                <Button
+                    variant="bordered"
+                    size="sm"
+                    rounded="full"
+                    className="justify-start"
+                    onClick={clearModelCache}
+                    disabled={isClearing}
+                >
+                    <IconTrash size={14} strokeWidth={2} />
+                    {isClearing ? 'Clearing...' : 'Clear Model Cache'}
+                </Button>
+                <Button
+                    variant="destructive"
+                    size="sm"
+                    rounded="full"
+                    className="justify-start"
+                    onClick={handleFactoryReset}
+                >
+                    <IconTrash size={14} strokeWidth={2} />
+                    Factory Reset
+                </Button>
             </div>
         </div>
     );

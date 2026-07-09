@@ -14,6 +14,7 @@ export * from './intro-dialog';
 export * from './layout/root';
 export * from './link-favicon';
 export * from './link-preview';
+export * from './local-ai/local-ai-settings';
 export * from './logo';
 export * from './mdx';
 export * from './messages-remaining-badge';

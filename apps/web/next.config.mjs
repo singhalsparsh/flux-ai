@@ -12,6 +12,7 @@ const nextConfig = {
 
     experimental: {
         externalDir: true,
+        serverComponentsExternalPackages: ['posthog-node', 'axios', 'follow-redirects', 'debug', 'supports-color'],
     },
     webpack: (config, options) => {
         if (!options.isServer) {
