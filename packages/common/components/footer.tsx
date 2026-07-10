@@ -3,15 +3,11 @@ import Link from 'next/link';
 export const Footer = () => {
     const links = [
         {
-            href: 'https://git.new/llmchat',
-            label: 'Star us on GitHub',
-        },
-        {
-            href: 'https://github.com',
+            href: '/changelog',
             label: 'Changelog',
         },
         {
-            href: '',
+            href: '/feedback',
             label: 'Feedback',
         },
         {
@@ -25,6 +21,7 @@ export const Footer = () => {
     ];
     return (
         <div className="flex w-full flex-row items-center justify-center gap-4 p-3">
+            <span className="text-muted-foreground text-xs opacity-50">FluxAI</span>
             {links.map(link => (
                 <Link
                     key={link.href}

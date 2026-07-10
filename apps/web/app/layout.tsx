@@ -16,38 +16,38 @@ const bricolage = Bricolage_Grotesque({
 import './globals.css';
 
 export const metadata: Metadata = {
-    title: 'llmchat.co - Go Deeper with AI-Powered Research & Agentic Workflows',
+    title: 'FluxAI - Go Deeper with AI-Powered Research & Agentic Workflows',
     description:
         'Experience deep, AI-powered research with agentic workflows and a wide variety of models for advanced productivity.',
-    keywords: 'AI chat, LLM, language models, privacy, minimal UI, ollama, chatgpt',
-    authors: [{ name: 'Trendy design', url: 'https://trendy.design' }],
-    creator: 'Trendy design',
-    publisher: 'Trendy design',
+    keywords: 'AI chat, LLM, language models, privacy, minimal UI, fluxai, chatgpt',
+    authors: [{ name: 'FluxAI', url: 'https://flux.sparshlike.eu.org' }],
+    creator: 'FluxAI',
+    publisher: 'FluxAI',
     openGraph: {
-        title: 'llmchat.co - Go Deeper with AI-Powered Research & Agentic Workflows',
-        siteName: 'llmchat.co',
+        title: 'FluxAI - Go Deeper with AI-Powered Research & Agentic Workflows',
+        siteName: 'FluxAI',
         description:
             'Experience deep, AI-powered research with agentic workflows and a wide variety of models for advanced productivity.',
-        url: 'https://llmchat.co',
+        url: 'https://flux.sparshlike.eu.org',
         type: 'website',
         locale: 'en_US',
         images: [
             {
-                url: 'https://llmchat.co/og-image.jpg',
+                url: 'https://flux.sparshlike.eu.org/og-image.jpg',
                 width: 1200,
                 height: 630,
-                alt: 'LLMChat Preview',
+                alt: 'FluxAI Preview',
             },
         ],
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'llmchat.co - Go Deeper with AI-Powered Research & Agentic Workflows',
-        site: 'llmchat.co',
-        creator: '@llmchat_co',
+        title: 'FluxAI - Go Deeper with AI-Powered Research & Agentic Workflows',
+        site: 'flux.sparshlike.eu.org',
+        creator: '@fluxai',
         description:
             'Experience deep, AI-powered research with agentic workflows and a wide variety of models for advanced productivity.',
-        images: ['https://llmchat.co/twitter-image.jpg'],
+        images: ['https://flux.sparshlike.eu.org/twitter-image.jpg'],
     },
     robots: {
         index: true,
@@ -61,7 +61,7 @@ export const metadata: Metadata = {
         },
     },
     alternates: {
-        canonical: 'https://llmchat.co',
+        canonical: 'https://flux.sparshlike.eu.org',
     },
 };
 

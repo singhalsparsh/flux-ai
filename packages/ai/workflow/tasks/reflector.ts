@@ -92,7 +92,7 @@ Current date: ${getHumanizedDate()}
 
         const object = await generateObject({
             prompt,
-            model: ModelEnum.GPT_4o_Mini,
+            model: ModelEnum.Mistral_Large,
             schema: z.object({
                 reasoning: z.string(),
                 queries: z.array(z.string()).optional().nullable(),

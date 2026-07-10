@@ -1,5 +1,5 @@
 'use client';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import {
     ImageAttachment,
     ImageDropzoneRoot,
@@ -262,6 +262,7 @@ type AnimatedTitlesProps = {
 };
 
 const AnimatedTitles = ({ titles = [] }: AnimatedTitlesProps) => {
+    const { user, isLoaded } = useUser();
     const [greeting, setGreeting] = React.useState<string>('');
 
     React.useEffect(() => {
@@ -270,25 +271,28 @@ const AnimatedTitles = ({ titles = [] }: AnimatedTitlesProps) => {
 
             if (hour >= 5 && hour < 12) {
                 return 'Good morning';
-            } else if (hour >= 12 && hour < 18) {
+            } else if (hour >= 12 && hour < 17) {
                 return 'Good afternoon';
-            } else {
+            } else if (hour >= 17 && hour < 21) {
                 return 'Good evening';
+            } else {
+                return 'Good night';
             }
         };
 
         setGreeting(getTimeBasedGreeting());
 
-        // Update the greeting if the component is mounted during a time transition
         const interval = setInterval(() => {
             const newGreeting = getTimeBasedGreeting();
             if (newGreeting !== greeting) {
                 setGreeting(newGreeting);
             }
-        }, 60000); // Check every minute
+        }, 60000);
 
         return () => clearInterval(interval);
     }, [greeting]);
+
+    const userName = isLoaded && user ? user.firstName || user.username || '' : '';
 
     return (
         <Flex
@@ -297,7 +301,7 @@ const AnimatedTitles = ({ titles = [] }: AnimatedTitlesProps) => {
         >
             <AnimatePresence mode="wait">
                 <motion.h1
-                    key={greeting}
+                    key={greeting + userName}
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
@@ -307,7 +311,7 @@ const AnimatedTitles = ({ titles = [] }: AnimatedTitlesProps) => {
                     }}
                     className="from-muted-foreground/50 via-muted-foreground/40 to-muted-foreground/20 bg-gradient-to-r bg-clip-text text-center text-[32px] font-semibold tracking-tight text-transparent"
                 >
-                    {greeting}
+                    {greeting}{userName ? `, ${userName}` : ''}
                 </motion.h1>
             </AnimatePresence>
         </Flex>

@@ -18,6 +18,7 @@ import {
     IconArrowUp,
     IconAtom,
     IconChevronDown,
+    IconCpu,
     IconNorthStar,
     IconPaperclip,
     IconPlayerStopFilled,
@@ -45,81 +46,36 @@ export const chatOptions = [
     },
 ];
 
-export const modelOptions = [
+// Smart API-based models
+export const smartModelOptions = [
     {
-        label: 'Llama 4 Scout',
-        value: ChatMode.LLAMA_4_SCOUT,
-        // webSearch: true,
+        label: 'Mistral Large',
+        value: ChatMode.MISTRAL_LARGE,
         icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.LLAMA_4_SCOUT],
+        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.MISTRAL_LARGE],
     },
     {
-        label: 'GPT 4.1',
-        value: ChatMode.GPT_4_1,
-        // webSearch: true,
+        label: 'Mistral Small',
+        value: ChatMode.MISTRAL_SMALL,
         icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.GPT_4_1],
+        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.MISTRAL_SMALL],
     },
     {
-        label: 'GPT 4.1 Mini',
-        value: ChatMode.GPT_4_1_Mini,
-        // webSearch: true,
+        label: 'Codestral',
+        value: ChatMode.CODESTRAL,
         icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.GPT_4_1_Mini],
+        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.CODESTRAL],
     },
-    {
-        label: 'GPT 4.1 Nano',
-        value: ChatMode.GPT_4_1_Nano,
-        // webSearch: true,
-        icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.GPT_4_1_Nano],
-    },
-    {
-        label: 'Gemini Flash 2.0',
-        value: ChatMode.GEMINI_2_FLASH,
-        // webSearch: true,
-        icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.GEMINI_2_FLASH],
-    },
+];
 
+// Local model (run locally via WebGPU in the browser)
+export const localModelOptions = [
     {
-        label: 'GPT 4o Mini',
-        value: ChatMode.GPT_4o_Mini,
-        // webSearch: true,
-        icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.GPT_4o_Mini],
-    },
-
-    {
-        label: 'O4 Mini',
-        value: ChatMode.O4_Mini,
-        // webSearch: true,
-        icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.O4_Mini],
-    },
-
-    {
-        label: 'Claude 3.5 Sonnet',
-        value: ChatMode.CLAUDE_3_5_SONNET,
-        // webSearch: true,
-        icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.CLAUDE_3_5_SONNET],
-    },
-
-    {
-        label: 'Deepseek R1',
-        value: ChatMode.DEEPSEEK_R1,
-        // webSearch: true,
-        icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.DEEPSEEK_R1],
-    },
-
-    {
-        label: 'Claude 3.7 Sonnet',
-        value: ChatMode.CLAUDE_3_7_SONNET,
-        // webSearch: true,
-        icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.CLAUDE_3_7_SONNET],
+        label: 'Local AI',
+        description: 'Run models locally in your browser using WebGPU',
+        value: ChatMode.LOCAL,
+        icon: <IconCpu size={16} className="text-muted-foreground" strokeWidth={2} />,
+        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.LOCAL],
     },
 ];
 
@@ -145,17 +101,16 @@ export const ChatModeButton = () => {
     const hasApiKeyForChatMode = useApiKeysStore(state => state.hasApiKeyForChatMode);
     const isChatPage = usePathname().startsWith('/chat');
 
-    const selectedOption =
-        (isChatPage
-            ? [...chatOptions, ...modelOptions].find(option => option.value === chatMode)
-            : [...modelOptions].find(option => option.value === chatMode)) ?? modelOptions[0];
+    // Show SMART or Local based on selected mode
+    const isSmartMode = smartModelOptions.some(o => o.value === chatMode);
+    const displayLabel = isSmartMode ? 'SMART' : 'Local';
 
     return (
         <DropdownMenu open={isChatModeOpen} onOpenChange={setIsChatModeOpen}>
             <DropdownMenuTrigger asChild>
                 <Button variant={'secondary'} size="xs">
-                    {selectedOption?.icon}
-                    {selectedOption?.label}
+                    {!isSmartMode && <IconAtom size={14} className="text-muted-foreground" strokeWidth={2} />}
+                    <span className="text-xs font-semibold">{displayLabel}</span>
                     <IconChevronDown size={14} strokeWidth={2} />
                 </Button>
             </DropdownMenuTrigger>
@@ -228,44 +183,13 @@ export const ChatModeOptions = ({
         <DropdownMenuContent
             align="start"
             side="bottom"
-            className="no-scrollbar max-h-[300px] w-[300px] overflow-y-auto"
+            className="no-scrollbar max-h-[400px] w-[300px] overflow-y-auto"
         >
-            {isChatPage && (
-                <DropdownMenuGroup>
-                    <DropdownMenuLabel>Advanced Mode</DropdownMenuLabel>
-                    {chatOptions.map(option => (
-                        <DropdownMenuItem
-                            key={option.label}
-                            onSelect={() => {
-                                if (ChatModeConfig[option.value]?.isAuthRequired && !isSignedIn) {
-                                    push('/sign-in');
-                                    return;
-                                }
-                                setChatMode(option.value);
-                            }}
-                            className="h-auto"
-                        >
-                            <div className="flex w-full flex-row items-start gap-1.5 px-1.5 py-1.5">
-                                <div className="flex flex-col gap-0 pt-1">{option.icon}</div>
-
-                                <div className="flex flex-col gap-0">
-                                    {<p className="m-0 text-sm font-medium">{option.label}</p>}
-                                    {option.description && (
-                                        <p className="text-muted-foreground text-xs font-light">
-                                            {option.description}
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="flex-1" />
-                                {ChatModeConfig[option.value]?.isNew && <NewIcon />}
-                            </div>
-                        </DropdownMenuItem>
-                    ))}
-                </DropdownMenuGroup>
-            )}
             <DropdownMenuGroup>
-                <DropdownMenuLabel>Models</DropdownMenuLabel>
-                {modelOptions.map(option => (
+                <DropdownMenuLabel className="text-brand text-xs font-semibold uppercase tracking-wider">
+                    ⚡ SMART
+                </DropdownMenuLabel>
+                {smartModelOptions.map(option => (
                     <DropdownMenuItem
                         key={option.label}
                         onSelect={() => {
@@ -283,12 +207,45 @@ export const ChatModeOptions = ({
                             </div>
                             <div className="flex-1" />
                             {ChatModeConfig[option.value]?.isNew && <NewIcon />}
-
                             {hasApiKeyForChatMode(option.value) && <BYOKIcon />}
                         </div>
                     </DropdownMenuItem>
                 ))}
             </DropdownMenuGroup>
+            {isChatPage && (
+                <DropdownMenuGroup>
+                    <DropdownMenuLabel className="text-brand mt-1 text-xs font-semibold uppercase tracking-wider">
+                        📍 Local
+                    </DropdownMenuLabel>
+                    {localModelOptions.map(option => (
+                        <DropdownMenuItem
+                            key={option.label}
+                            onSelect={() => {
+                                if (ChatModeConfig[option.value]?.isAuthRequired && !isSignedIn) {
+                                    push('/sign-in');
+                                    return;
+                                }
+                                setChatMode(option.value);
+                            }}
+                            className="h-auto"
+                        >
+                            <div className="flex w-full flex-row items-start gap-1.5 px-1.5 py-1.5">
+                                <div className="flex flex-col gap-0 pt-1">{option.icon}</div>
+                                <div className="flex flex-col gap-0">
+                                    {<p className="m-0 text-sm font-medium">{option.label}</p>}
+                                    {option.description && (
+                                        <p className="text-muted-foreground text-xs font-light">
+                                            {option.description}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="flex-1" />
+                                {ChatModeConfig[option.value]?.isNew && <NewIcon />}
+                            </div>
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuGroup>
+            )}
         </DropdownMenuContent>
     );
 };

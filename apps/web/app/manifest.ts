@@ -2,14 +2,14 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'llmchat.co',
-        short_name: 'llmchat.co',
+        name: 'FluxAI',
+        short_name: 'FluxAI',
         description:
-            'llmchat.co is a modern AI chat client that allows you to chat with AI in a more intuitive way.',
+            'FluxAI is a modern AI chat client that allows you to chat with AI in a more intuitive way.',
         start_url: '/',
         display: 'standalone',
-        background_color: 'hsl(60 20% 99%)',
-        theme_color: 'hsl(60 1% 10%)',
+        background_color: '#f0f8ff',
+        theme_color: '#4fc3f7',
         icons: [
             {
                 src: '/icon-192x192.png',

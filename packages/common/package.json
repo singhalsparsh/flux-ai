@@ -13,10 +13,11 @@
         "type-check": "tsc --noEmit"
     },
     "dependencies": {
+        "@mlc-ai/web-llm": "^0.2.84",
+        "@repo/actions": "*",
         "@repo/ai": "*",
         "@repo/shared": "*",
         "@repo/ui": "*",
-        "@repo/actions": "*",
         "@tiptap/extension-character-count": "^2.11.7"
     },
     "devDependencies": {

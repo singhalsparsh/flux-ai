@@ -142,7 +142,7 @@ export const Sidebar = () => {
                             <Logo className="text-brand size-5" />
                             {isSidebarOpen && (
                                 <p className="font-clash text-foreground text-lg font-bold tracking-wide">
-                                    llmchat.co
+                                    FluxAI
                                 </p>
                             )}
                         </motion.div>
@@ -268,7 +268,7 @@ export const Sidebar = () => {
                         )}
                     >
                         {renderGroup({
-                            title: 'Pinned',
+                            title: 'Pinned Chats',
                             threads: threads
                                 .filter(thread => thread.pinned)
                                 .sort((a, b) => b.pinnedAt.getTime() - a.pinnedAt.getTime()),

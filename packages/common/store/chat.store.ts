@@ -39,9 +39,9 @@ const loadInitialData = async () => {
               model: models[0].id,
               useWebSearch: false,
               showSuggestions: true,
-              chatMode: ChatMode.GEMINI_2_FLASH,
+              chatMode: ChatMode.MISTRAL_SMALL,
           };
-    const chatMode = config.chatMode || ChatMode.GEMINI_2_FLASH;
+    const chatMode = config.chatMode || ChatMode.MISTRAL_SMALL;
     const useWebSearch = typeof config.useWebSearch === 'boolean' ? config.useWebSearch : false;
     const customInstructions = config.customInstructions || '';
 
@@ -439,7 +439,7 @@ export const useChatStore = create(
         editor: undefined,
         context: '',
         threads: [],
-        chatMode: ChatMode.GEMINI_2_FLASH,
+        chatMode: ChatMode.MISTRAL_SMALL,
         threadItems: [],
         useWebSearch: false,
         customInstructions: '',
@@ -652,7 +652,7 @@ export const useChatStore = create(
             const threadId = optimisticId || nanoid();
             const newThread = {
                 id: threadId,
-                title: thread?.title || 'New Thread',
+                title: thread?.title || 'New Chat',
                 updatedAt: new Date(),
                 createdAt: new Date(),
                 pinned: false,
@@ -812,7 +812,7 @@ export const useChatStore = create(
                         id: threadItem.id,
                         threadId,
                         query: threadItem.query || '',
-                        mode: threadItem.mode || ChatMode.GEMINI_2_FLASH,
+                        mode: threadItem.mode || ChatMode.MISTRAL_SMALL,
                         createdAt: new Date(),
                         updatedAt: new Date(),
                         ...threadItem,

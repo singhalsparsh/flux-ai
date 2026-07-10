@@ -86,7 +86,7 @@ export const Sidebar = () => {
                         size={isSidebarOpen ? 'sm' : 'icon'}
                         variant="bordered"
                         rounded="full"
-                        tooltip={isSidebarOpen ? undefined : 'New Thread'}
+                        tooltip={isSidebarOpen ? undefined : 'New Chat'}
                         tooltipSide="right"
                         className={cn('relative w-full shadow-sm', 'justify-center')}
                         onClick={() => !isChatPage && push('/chat')}
@@ -96,7 +96,7 @@ export const Sidebar = () => {
                             strokeWidth={2}
                             className={cn(isSidebarOpen && 'absolute left-2')}
                         />
-                        {isSidebarOpen && 'New'}
+                        {isSidebarOpen && 'New Chat'}
                     </Button>
                     <Button
                         size={isSidebarOpen ? 'sm' : 'icon'}

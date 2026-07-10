@@ -6,7 +6,8 @@ import { buildCoreMessagesFromThreadItems, plausible } from '@repo/shared/utils'
 import { nanoid } from 'nanoid';
 import { useParams, useRouter } from 'next/navigation';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react';
-import { useApiKeysStore, useAppStore, useChatStore, useMcpToolsStore } from '../store';
+import { useApiKeysStore, useAppStore, useChatStore, useLocalAIStore, useMcpToolsStore } from '../store';
+import { useLocalLLM } from './use-local-llm';
 
 export type AgentContextType = {
     runAgent: (body: any) => Promise<void>;
@@ -58,6 +59,8 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
     const apiKeys = useApiKeysStore(state => state.getAllKeys);
     const hasApiKeyForChatMode = useApiKeysStore(state => state.hasApiKeyForChatMode);
     const setShowSignInModal = useAppStore(state => state.setShowSignInModal);
+    const localAIStore = useLocalAIStore();
+    const { generate: localGenerate, isLoaded: isLocalModelLoaded, isLoading: isLocalModelLoading } = useLocalLLM();
 
     // Fetch remaining credits when user changes
     useEffect(() => {
@@ -400,7 +403,63 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
                 imageAttachment,
             });
 
-            if (hasApiKeyForChatMode(mode)) {
+            if (mode === ChatMode.LOCAL) {
+                // ── Local AI mode ──────────────────────────────────────────
+                if (!isLocalModelLoaded && !isLocalModelLoading) {
+                    const errMsg = 'No local model loaded. Please go to Settings → Local AI to load a model first.';
+                    setIsGenerating(false);
+                    updateThreadItem(threadId, {
+                        id: optimisticAiThreadItemId,
+                        status: 'ERROR',
+                        error: errMsg,
+                        persistToDB: true,
+                    });
+                    return;
+                }
+
+                const abortController = new AbortController();
+                setAbortController(abortController);
+
+                abortController.signal.addEventListener('abort', () => {
+                    setIsGenerating(false);
+                    updateThreadItem(threadId, { id: optimisticAiThreadItemId, status: 'ABORTED' });
+                });
+
+                try {
+                    // Convert core messages to local LLM format (role/content strings)
+                    const localMessages = coreMessages.map(m => ({
+                        role: m.role,
+                        content: typeof m.content === 'string' ? m.content : '',
+                    }));
+
+                    // Start generation
+                    updateThreadItem(threadId, {
+                        id: optimisticAiThreadItemId,
+                        status: 'GENERATING',
+                    });
+
+                    const fullText = await localGenerate(localMessages);
+
+                    updateThreadItem(threadId, {
+                        id: optimisticAiThreadItemId,
+                        status: 'COMPLETED',
+                        answer: { text: fullText },
+                        persistToDB: true,
+                    });
+
+                    setTimeout(fetchRemainingCredits, 1000);
+                } catch (err: any) {
+                    const msg = err?.message || 'Local generation failed';
+                    updateThreadItem(threadId, {
+                        id: optimisticAiThreadItemId,
+                        status: 'ERROR',
+                        error: msg,
+                        persistToDB: true,
+                    });
+                } finally {
+                    setIsGenerating(false);
+                }
+            } else if (hasApiKeyForChatMode(mode)) {
                 const abortController = new AbortController();
                 setAbortController(abortController);
                 setIsGenerating(true);
@@ -421,7 +480,7 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
                     threadItemId: optimisticAiThreadItemId,
                     parentThreadItemId: '',
                     customInstructions,
-                    apiKeys: apiKeys(),
+                    apiKeys: Object.fromEntries(Object.entries(apiKeys()).map(([k, v]) => [k, Array.isArray(v) ? v[0] || '' : v])),
                 });
             } else {
                 runAgent({
@@ -456,6 +515,10 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
             hasApiKeyForChatMode,
             updateThreadItem,
             runAgent,
+            isLocalModelLoaded,
+            isLocalModelLoading,
+            localGenerate,
+            fetchRemainingCredits,
         ]
     );
 

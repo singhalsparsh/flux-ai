@@ -15,7 +15,7 @@ const getTitle = (threadItem: ThreadItem) => {
     if (threadItem.mode === ChatMode.Deep) {
         return 'Research';
     }
-    if ([ChatMode.DEEPSEEK_R1].includes(threadItem.mode)) {
+    if ([ChatMode.MISTRAL_LARGE].includes(threadItem.mode)) {
         return 'Thinking';
     }
     if (threadItem.mode === ChatMode.Pro) {

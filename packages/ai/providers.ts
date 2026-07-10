@@ -1,27 +1,22 @@
-import { createAnthropic } from '@ai-sdk/anthropic';
-import { createFireworks } from '@ai-sdk/fireworks';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAI } from '@ai-sdk/openai';
 import { LanguageModelV1 } from '@ai-sdk/provider';
-import { createTogetherAI } from '@ai-sdk/togetherai';
 import { LanguageModelV1Middleware, wrapLanguageModel } from 'ai';
 import { ModelEnum, models } from './models';
 
 export const Providers = {
-  OPENAI: 'openai',
-  ANTHROPIC: 'anthropic',
-  TOGETHER: 'together',
-  GOOGLE: 'google',
-  FIREWORKS: 'fireworks',
+  MISTRAL: 'mistral',
 } as const;
 
 export type ProviderEnumType = (typeof Providers)[keyof typeof Providers];
 
-// Define a global type for API keys
+// Define a global type for API keys with multi-key support
 declare global {
   interface Window {
     AI_API_KEYS?: {
-      [key in ProviderEnumType]?: string;
+      [key: string]: string;
+    };
+    AI_API_KEYS_ARRAY?: {
+      [key: string]: string[];
     };
     SERPER_API_KEY?: string;
     JINA_API_KEY?: string;
@@ -33,78 +28,57 @@ declare global {
 const getApiKey = (provider: ProviderEnumType): string => {
   // For server environments
   if (typeof process !== 'undefined' && process.env) {
-    switch (provider) {
-      case Providers.OPENAI:
-        if (process.env.OPENAI_API_KEY) return process.env.OPENAI_API_KEY;
-        break;
-      case Providers.ANTHROPIC:
-        if (process.env.ANTHROPIC_API_KEY) return process.env.ANTHROPIC_API_KEY;
-        break;
-      case Providers.TOGETHER:
-        if (process.env.TOGETHER_API_KEY) return process.env.TOGETHER_API_KEY;
-        break;
-      case Providers.GOOGLE:
-        if (process.env.GEMINI_API_KEY) return process.env.GEMINI_API_KEY;
-        break;
-      case Providers.FIREWORKS:
-        if (process.env.FIREWORKS_API_KEY) return process.env.FIREWORKS_API_KEY;
-        break;
+    if (provider === Providers.MISTRAL && process.env.MISTRAL_API_KEY) {
+      return process.env.MISTRAL_API_KEY;
     }
   }
 
-  // For worker environments (use self)
-  if (typeof self !== 'undefined') {
-    // Check if AI_API_KEYS exists on self
-    if ((self as any).AI_API_KEYS && (self as any).AI_API_KEYS[provider]) {
-      return (self as any).AI_API_KEYS[provider];
-    }
-    
-    // For browser environments (self is also defined in browser)
-    if (typeof window !== 'undefined' && window.AI_API_KEYS) {
-      return window.AI_API_KEYS[provider] || '';
-    }
+  // For browser environments
+  if (typeof window !== 'undefined' && window.AI_API_KEYS) {
+    return window.AI_API_KEYS[provider] || '';
   }
 
   return '';
 };
 
-export const getProviderInstance = (provider: ProviderEnumType) => {
-  switch (provider) {
-    case Providers.OPENAI:
-      return createOpenAI({
-        apiKey: getApiKey(Providers.OPENAI),
-      });
-    case 'anthropic':
-      return createAnthropic({
-        apiKey: getApiKey(Providers.ANTHROPIC),
-        headers:{
-          "anthropic-dangerous-direct-browser-access": "true"
-        }
-      });
-    case 'together':
-      return createTogetherAI({
-        apiKey: getApiKey(Providers.TOGETHER),
-      });
-    case 'google':
-      return createGoogleGenerativeAI({
-        apiKey: getApiKey(Providers.GOOGLE),
-        
-      });
-    case 'fireworks':
-      return createFireworks({
-        apiKey: getApiKey(Providers.FIREWORKS),
-      });
-    default:
-      return createOpenAI({
-        apiKey: getApiKey(Providers.OPENAI),
-      });
+// Multi-key fallback: get the next available key for a provider
+// This cycles through multiple keys if one fails
+let keyIndexMap: Record<string, number> = {};
+
+export const getNextApiKey = (provider: ProviderEnumType): string => {
+  // First try env vars
+  const envKey = getApiKey(provider);
+  if (envKey) return envKey;
+
+  // Then try multi-key arrays from the store
+  if (typeof window !== 'undefined' && window.AI_API_KEYS_ARRAY) {
+    const keys = window.AI_API_KEYS_ARRAY[provider];
+    if (keys && keys.length > 0) {
+      const idx = (keyIndexMap[provider] || 0) % keys.length;
+      keyIndexMap[provider] = (keyIndexMap[provider] || 0) + 1;
+      return keys[idx] || '';
+    }
   }
+
+  return envKey;
+};
+
+export const resetKeyIndex = (provider: ProviderEnumType) => {
+  keyIndexMap[provider] = 0;
+};
+
+export const getProviderInstance = (provider: ProviderEnumType) => {
+  const apiKey = getApiKey(provider);
+  return createOpenAI({
+    baseURL: 'https://api.mistral.ai/v1',
+    apiKey,
+  });
 };
 
 export const getLanguageModel = (m: ModelEnum, middleware?: LanguageModelV1Middleware) => {
   const model = models.find(model => model.id === m);
-  const instance = getProviderInstance(model?.provider as ProviderEnumType);
-  const selectedModel = instance(model?.id || 'gpt-4o-mini')
+  const instance = getProviderInstance('mistral');
+  const selectedModel = instance(model?.id || 'mistral-small-latest');
   if(middleware) {
     return wrapLanguageModel({model: selectedModel, middleware }) as LanguageModelV1;
   }

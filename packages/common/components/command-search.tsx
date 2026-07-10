@@ -91,7 +91,7 @@ export const CommandSearch = () => {
 
     const actions = [
         {
-            name: 'New Thread',
+            name: 'New Chat',
             icon: IconPlus,
             action: () => {
                 router.push('/chat');

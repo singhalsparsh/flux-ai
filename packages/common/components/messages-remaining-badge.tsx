@@ -10,9 +10,10 @@ export function MessagesRemainingBadge() {
     const setIsSettingsOpen = useAppStore(state => state.setIsSettingsOpen);
     const setSettingTab = useAppStore(state => state.setSettingTab);
 
+    // Hide badge when user is logged in (unlimited usage) or has API keys
     if (
         !creditLimit.isFetched ||
-        !user ||
+        user ||
         (creditLimit?.remaining && creditLimit?.remaining > 5) ||
         hasApiKeys
     ) {

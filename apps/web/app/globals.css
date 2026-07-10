@@ -18,41 +18,41 @@
         --vaul-overlay-background-start: transparent;
         --vaul-overlay-background-end: rgba(0, 0, 0, 0.4);
 
-        --background: 180 0% 100%;
-        --foreground: 180 0% 2%;
+        --background: 199 20% 100%;
+        --foreground: 199 10% 2%;
 
-        --secondary: 180 0% 98%;
-        --secondary-foreground: 180 0% 4%;
+        --secondary: 199 15% 98%;
+        --secondary-foreground: 199 10% 4%;
 
-        --tertiary: 180 0% 94%;
-        --tertiary-foreground: 180 0% 6%;
+        --tertiary: 199 10% 94%;
+        --tertiary-foreground: 199 10% 6%;
 
-        --quaternary: 180 0% 90%;
-        --quaternary-foreground: 180 0% 10%;
+        --quaternary: 199 10% 90%;
+        --quaternary-foreground: 199 10% 10%;
 
-        --card: 40 30% 98%;
-        --card-foreground: 20 15% 10%;
+        --card: 199 20% 99%;
+        --card-foreground: 199 15% 10%;
 
-        --popover: 180 0% 99.5%;
-        --popover-foreground: 180 0% 2%;
+        --popover: 199 20% 99.5%;
+        --popover-foreground: 199 10% 2%;
 
-        --brand: 14 93% 63%;
-        --brand-foreground: 164 86% 66%;
+        --brand: 199 95% 56%;
+        --brand-foreground: 199 90% 96%;
 
-        --accent: 164 70% 33%;
-        --accent-foreground: 164 70% 96%;
+        --accent: 199 85% 40%;
+        --accent-foreground: 199 90% 96%;
 
-        --muted: 180 0% 90%;
-        --muted-foreground: 180 0% 10%;
+        --muted: 199 10% 90%;
+        --muted-foreground: 199 10% 35%;
 
         --destructive: 0 84% 60%;
         --destructive-foreground: 40 30% 98%;
 
-        --border: 180 0% 84%;
-        --soft: 180 0% 92%;
-        --hard: 180 0% 78%;
-        --input: 180 0% 85%;
-        --ring: 20 15% 10%;
+        --border: 199 10% 84%;
+        --soft: 199 10% 92%;
+        --hard: 199 10% 78%;
+        --input: 199 10% 85%;
+        --ring: 199 50% 30%;
 
         --radius: 0.5rem;
 
@@ -69,41 +69,41 @@
         --vaul-overlay-background-start: transparent;
         --vaul-overlay-background-end: rgba(0, 0, 0, 0.4);
 
-        --background: 180 0% 10%;
-        --foreground: 180 0% 98%;
+        --background: 199 15% 8%;
+        --foreground: 199 10% 98%;
 
-        --secondary: 180 0% 8%;
-        --secondary-foreground: 180 0% 98%;
+        --secondary: 199 15% 6%;
+        --secondary-foreground: 199 10% 98%;
 
-        --tertiary: 180 0% 6%;
-        --tertiary-foreground: 180 0% 98%;
+        --tertiary: 199 10% 4%;
+        --tertiary-foreground: 199 10% 98%;
 
-        --quaternary: 180 0% 2%;
-        --quaternary-foreground: 180 0% 98%;
+        --quaternary: 199 10% 2%;
+        --quaternary-foreground: 199 10% 98%;
 
-        --card: 40 30% 98%;
-        --card-foreground: 20 15% 10%;
+        --card: 199 20% 10%;
+        --card-foreground: 199 15% 90%;
 
-        --popover: 180 0% 4%;
-        --popover-foreground: 180 0% 96%;
+        --popover: 199 15% 4%;
+        --popover-foreground: 199 10% 96%;
 
-        --brand: 14 93% 63%;
-        --brand-foreground: 164 86% 66%;
+        --brand: 199 95% 56%;
+        --brand-foreground: 199 90% 96%;
 
-        --accent: 164 70% 33%;
-        --accent-foreground: 164 70% 96%;
+        --accent: 199 75% 60%;
+        --accent-foreground: 199 90% 96%;
 
-        --muted: 180 0% 20%;
-        --muted-foreground: 180 0% 70%;
+        --muted: 199 10% 20%;
+        --muted-foreground: 199 10% 70%;
 
         --destructive: 0 84% 60%;
         --destructive-foreground: 40 30% 98%;
 
-        --border: 180 0% 16%;
-        --soft: 180 0% 8%;
-        --hard: 180 0% 22%;
-        --input: 180 0% 16%;
-        --ring: 20 15% 10%;
+        --border: 199 10% 16%;
+        --soft: 199 10% 8%;
+        --hard: 199 10% 22%;
+        --input: 199 10% 16%;
+        --ring: 199 50% 50%;
 
         --radius: 0.5rem;
 

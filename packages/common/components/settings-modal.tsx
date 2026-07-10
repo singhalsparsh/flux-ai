@@ -9,7 +9,7 @@ import { Badge, Dialog, DialogContent, Input } from '@repo/ui';
 import { useChatEditor } from '@repo/common/hooks';
 import moment from 'moment';
 import { useCallback, useEffect, useState } from 'react';
-import { ApiKeys, useApiKeysStore } from '../store/api-keys.store';
+import { PROVIDER_IDS, PROVIDER_INFO, useApiKeysStore } from '../store/api-keys.store';
 import { SETTING_TABS, useAppStore } from '../store/app.store';
 import { useChatStore, useLocalAIStore } from '../store';
 import { ChatEditor } from './chat-input';
@@ -298,115 +298,143 @@ const AddToolDialog = ({ isOpen, onOpenChange, onAddTool }: AddToolDialogProps) 
 };
 
 export const ApiKeySettings = () => {
-    const apiKeys = useApiKeysStore(state => state.getAllKeys());
-    const setApiKey = useApiKeysStore(state => state.setKey);
-    const [isEditing, setIsEditing] = useState<string | null>(null);
+    const apiKeys = useApiKeysStore(state => state.keys);
+    const setKeys = useApiKeysStore(state => state.setKeys);
+    const addKey = useApiKeysStore(state => state.addKey);
+    const removeKey = useApiKeysStore(state => state.removeKey);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [editingProvider, setEditingProvider] = useState<string | null>(null);
+    const [newKeyValue, setNewKeyValue] = useState('');
 
-    const apiKeyList = [
-        {
-            name: 'OpenAI',
-            key: 'OPENAI_API_KEY' as keyof ApiKeys,
-            value: apiKeys.OPENAI_API_KEY,
-            url: 'https://platform.openai.com/api-keys',
-        },
-        {
-            name: 'Anthropic',
-            key: 'ANTHROPIC_API_KEY' as keyof ApiKeys,
-            value: apiKeys.ANTHROPIC_API_KEY,
-            url: 'https://console.anthropic.com/settings/keys',
-        },
-        {
-            name: 'Google Gemini',
-            key: 'GEMINI_API_KEY' as keyof ApiKeys,
-            value: apiKeys.GEMINI_API_KEY,
-            url: 'https://ai.google.dev/api',
-        },
-    ];
-
-    const validateApiKey = (apiKey: string, provider: string) => {
-        // Validation logic will be implemented later
-        console.log(`Validating ${provider} API key: ${apiKey}`);
-        return true;
-    };
-
-    const handleSave = (keyName: keyof ApiKeys, value: string) => {
-        setApiKey(keyName, value);
-        setIsEditing(null);
-    };
+    const providerList = Object.entries(PROVIDER_INFO).filter(([id]) => {
+        if (!searchTerm) return true;
+        const info = PROVIDER_INFO[id];
+        return info.name.toLowerCase().includes(searchTerm.toLowerCase());
+    });
 
     const getMaskedKey = (key: string) => {
         if (!key) return '';
-        return '****************' + key.slice(-4);
+        return '•'.repeat(24) + key.slice(-4);
+    };
+
+    const handleAddKey = (provider: string) => {
+        if (newKeyValue.trim()) {
+            addKey(provider, newKeyValue.trim());
+            setNewKeyValue('');
+            setEditingProvider(null);
+        }
     };
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
             <div className="flex flex-col">
                 <h2 className="flex items-center gap-1 text-base font-semibold">
                     API Keys <BYOKIcon />
                 </h2>
-
                 <p className="text-muted-foreground text-xs">
-                    By default, your API Key is stored locally on your browser and never sent
-                    anywhere else.
+                    By default, your API Key is stored locally on your browser and never sent anywhere else.
+                </p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                    Add multiple keys per provider for automatic fallback if one fails.
                 </p>
             </div>
 
-            {apiKeyList.map(apiKey => (
-                <div key={apiKey.key} className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{apiKey.name} API Key:</span>
-                        <a
-                            href={apiKey.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-blue-400 underline-offset-2 hover:underline"
-                        >
-                            (Get API key here)
-                        </a>
-                    </div>
+            <Input
+                placeholder="Search providers..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="mb-2"
+            />
 
-                    <div className="flex items-center gap-2">
-                        {isEditing === apiKey.key ? (
-                            <>
-                                <div className="flex-1">
-                                    <Input
-                                        value={apiKey.value || ''}
-                                        placeholder={`Enter ${apiKey.name} API key`}
-                                        onChange={e => setApiKey(apiKey.key, e.target.value)}
-                                    />
-                                </div>
-                                <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={() => handleSave(apiKey.key, apiKey.value || '')}
-                                >
-                                    <span className="flex items-center gap-1">✓ Save</span>
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                <div className="flex flex-1 items-center gap-2 rounded-md border px-3 py-1.5">
-                                    {apiKey.value ? (
-                                        <span className="flex-1">{getMaskedKey(apiKey.value)}</span>
-                                    ) : (
-                                        <span className="text-muted-foreground flex-1 text-sm">
-                                            No API key set
+            <div className="no-scrollbar flex max-h-[400px] flex-col gap-2 overflow-y-auto">
+                {providerList.map(([id, info]) => {
+                    const keys = apiKeys[id] || [];
+                    return (
+                        <div key={id} className="bg-secondary/50 rounded-lg border p-3">
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium">{info.name}</span>
+                                    {keys.length > 0 && (
+                                        <span className="bg-brand/10 text-brand rounded-full px-2 py-0.5 text-[10px] font-medium">
+                                            {keys.length} key{keys.length > 1 ? 's' : ''}
                                         </span>
                                     )}
                                 </div>
-                                <Button
-                                    variant={'bordered'}
-                                    size="sm"
-                                    onClick={() => setIsEditing(apiKey.key)}
+                                <a
+                                    href={info.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-brand text-xs underline-offset-2 hover:underline"
                                 >
-                                    {apiKey.value ? 'Change Key' : 'Add Key'}
+                                    Get key
+                                </a>
+                            </div>
+
+                            {/* Show existing keys */}
+                            {keys.length > 0 && (
+                                <div className="mt-2 flex flex-col gap-1">
+                                    {keys.map((key, idx) => (
+                                        <div key={idx} className="flex items-center gap-2">
+                                            <div className="flex flex-1 items-center gap-2 rounded-md border bg-white px-2 py-1 text-xs font-mono">
+                                                {getMaskedKey(key)}
+                                            </div>
+                                            <Button
+                                                size="icon-xs"
+                                                variant="ghost"
+                                                tooltip="Remove key"
+                                                onClick={() => removeKey(id, idx)}
+                                            >
+                                                <IconTrash size={12} strokeWidth={2} />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Add key input */}
+                            {editingProvider === id ? (
+                                <div className="mt-2 flex items-center gap-2">
+                                    <Input
+                                        value={newKeyValue}
+                                        placeholder={`Enter ${info.name} API key`}
+                                        onChange={e => setNewKeyValue(e.target.value)}
+                                        className="flex-1"
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') handleAddKey(id);
+                                            if (e.key === 'Escape') {
+                                                setEditingProvider(null);
+                                                setNewKeyValue('');
+                                            }
+                                        }}
+                                    />
+                                    <Button size="sm" variant="default" onClick={() => handleAddKey(id)}>
+                                        Add
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                            setEditingProvider(null);
+                                            setNewKeyValue('');
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button
+                                    size="xs"
+                                    variant="ghost"
+                                    className="mt-2"
+                                    onClick={() => setEditingProvider(id)}
+                                >
+                                    + Add API Key
                                 </Button>
-                            </>
-                        )}
-                    </div>
-                </div>
-            ))}
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 };
@@ -415,41 +443,51 @@ export const CreditsSettings = () => {
     const remainingCredits = useChatStore(state => state.creditLimit.remaining);
     const maxLimit = useChatStore(state => state.creditLimit.maxLimit);
     const resetDate = useChatStore(state => state.creditLimit.reset);
+    const isAuthenticated = useChatStore(state => state.creditLimit.isAuthenticated);
 
     const info = [
         {
             title: 'Plan',
             value: (
                 <Badge variant="secondary" className="bg-brand/10 text-brand rounded-full">
-                    <span className="text-xs font-medium">FREE</span>
+                    <span className="text-xs font-medium">
+                        {isAuthenticated ? 'UNLIMITED' : 'FREE'}
+                    </span>
                 </Badge>
             ),
         },
         {
-            title: 'Credits',
-            value: (
+            title: 'Usage',
+            value: isAuthenticated ? (
+                <span className="text-brand text-sm font-medium">∞ Unlimited</span>
+            ) : (
                 <div className="flex h-7 flex-row items-center gap-1 rounded-full py-1">
                     <IconBoltFilled size={14} strokeWidth={2} className="text-brand" />
-                    <span className="text-brand text-sm font-medium">{remainingCredits}</span>
+                    <span className="text-brand text-sm font-medium">{remainingCredits ?? 0}</span>
                     <span className="text-brand text-sm opacity-50">/</span>
-                    <span className="text-brand text-sm opacity-50">{maxLimit}</span>
+                    <span className="text-brand text-sm opacity-50">{maxLimit ?? 0}</span>
                 </div>
             ),
         },
-        {
-            title: 'Next reset',
-            value: moment(resetDate).fromNow(),
-        },
+        ...(resetDate
+            ? [
+                  {
+                      title: 'Next reset',
+                      value: moment(resetDate).fromNow(),
+                  },
+              ]
+            : []),
     ];
 
     return (
         <div className="flex flex-col gap-6">
             <div className="flex flex-col items-start gap-2">
-                <h2 className="flex items-center gap-1 text-base font-medium">Usage Credits</h2>
+                <h2 className="flex items-center gap-1 text-base font-medium">Usage</h2>
                 <Alert variant="info" className="w-full">
                     <AlertDescription className="text-muted-foreground/70 text-sm leading-tight">
-                        You'll recieve some free credits everyday. Once credits are used, you can
-                        use your own API keys to continue.
+                        {isAuthenticated
+                            ? 'You have unlimited usage. Add your own API keys in the API Keys section to use your own quota.'
+                            : 'You\'ll receive free credits everyday. Once credits are used, you can use your own API keys to continue.'}
                     </AlertDescription>
                 </Alert>
 

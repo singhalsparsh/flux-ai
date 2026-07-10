@@ -1,7 +1,9 @@
 {
     "extends": "@repo/typescript-config",
     "compilerOptions": {
-        "baseUrl": "."
+        "baseUrl": ".",
+        "module": "esnext",
+        "moduleResolution": "bundler"
     },
     "include": ["**/*.ts", "**/*.tsx", "**/**/*.ts", "**/**/*.tsx"],
     "exclude": ["node_modules"]

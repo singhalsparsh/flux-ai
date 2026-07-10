@@ -52,8 +52,9 @@ export type RequestIdentifier = {
 export async function getRemainingCredits(identifier: RequestIdentifier): Promise<number> {
     const { userId, ip } = identifier;
 
+    // Authenticated users have unlimited credits
     if (userId) {
-        return getRemainingCreditsForUser(userId);
+        return 999999;
     } else if (ip) {
         return getRemainingCreditsForIp(ip);
     }
