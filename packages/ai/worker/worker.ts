@@ -44,13 +44,24 @@ ctx.addEventListener('message', async (event: MessageEvent) => {
             if (newApiKeys) {
                 apiKeys = newApiKeys;
 
+                // Keys arrive from the store as { openai: 'sk-...', anthropic: 'sk-...', ... }
+                // Map them to provider IDs that getApiKey() looks up.
                 self.AI_API_KEYS = {
-                    openai: apiKeys.OPENAI_API_KEY,
-                    anthropic: apiKeys.ANTHROPIC_API_KEY,
-                    fireworks: apiKeys.FIREWORKS_API_KEY,
-                    google: apiKeys.GEMINI_API_KEY,
-                    together: apiKeys.TOGETHER_API_KEY,
+                    openai: apiKeys.openai,
+                    anthropic: apiKeys.anthropic,
+                    fireworks: apiKeys.fireworks,
+                    gemini: apiKeys.gemini,
+                    google: apiKeys.gemini,     // <-- alias for consistency
+                    together: apiKeys.together,
+                    deepseek: apiKeys.deepseek,
+                    nvidia: apiKeys.nvidia,
+                    mistral: apiKeys.mistral,
                 };
+
+                // Support multi-key arrays
+                if (newApiKeys._keyArrays) {
+                    self.AI_API_KEYS_ARRAY = newApiKeys._keyArrays;
+                }
 
                 self.SERPER_API_KEY = apiKeys.SERPER_API_KEY;
                 self.JINA_API_KEY = apiKeys.JINA_API_KEY;

@@ -7,8 +7,10 @@ export const SETTING_TABS = {
     MCP_TOOLS: 'mcp-tools',
     CREDITS: 'credits',
     PERSONALIZATION: 'personalization',
+    THEME: 'theme',
     LOCAL_AI: 'local-ai',
     STORAGE: 'storage',
+    EXPORT: 'export',
 } as const;
 
 type SideDrawerProps = {

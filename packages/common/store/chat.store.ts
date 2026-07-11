@@ -432,6 +432,20 @@ const notifyWorker = (type: string, data: any) => {
 // Create a debounced version of the notification function
 const debouncedNotify = debounce(notifyWorker, 300);
 
+// Synchronously read chatMode from localStorage so it's available on first render
+const getInitialChatMode = (): ChatMode => {
+    if (typeof window !== 'undefined') {
+        try {
+            const configStr = localStorage.getItem('chat-config');
+            if (configStr) {
+                const config = JSON.parse(configStr);
+                if (config.chatMode) return config.chatMode;
+            }
+        } catch {}
+    }
+    return ChatMode.MISTRAL_SMALL;
+};
+
 export const useChatStore = create(
     immer<State & Actions>((set, get) => ({
         model: models[0],
@@ -439,7 +453,7 @@ export const useChatStore = create(
         editor: undefined,
         context: '',
         threads: [],
-        chatMode: ChatMode.MISTRAL_SMALL,
+        chatMode: getInitialChatMode(),
         threadItems: [],
         useWebSearch: false,
         customInstructions: '',
@@ -492,7 +506,8 @@ export const useChatStore = create(
         },
 
         setShowSuggestions: (showSuggestions: boolean) => {
-            localStorage.setItem(CONFIG_KEY, JSON.stringify({ showSuggestions }));
+            const existingConfig = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+            localStorage.setItem(CONFIG_KEY, JSON.stringify({ ...existingConfig, showSuggestions }));
             set(state => {
                 state.showSuggestions = showSuggestions;
             });
@@ -507,7 +522,8 @@ export const useChatStore = create(
         },
 
         setChatMode: (chatMode: ChatMode) => {
-            localStorage.setItem(CONFIG_KEY, JSON.stringify({ chatMode }));
+            const existingConfig = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+            localStorage.setItem(CONFIG_KEY, JSON.stringify({ ...existingConfig, chatMode }));
             set(state => {
                 state.chatMode = chatMode;
             });
@@ -672,7 +688,8 @@ export const useChatStore = create(
         },
 
         setModel: async (model: Model) => {
-            localStorage.setItem(CONFIG_KEY, JSON.stringify({ model: model.id }));
+            const existingConfig = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+            localStorage.setItem(CONFIG_KEY, JSON.stringify({ ...existingConfig, model: model.id }));
             set(state => {
                 state.model = model;
             });
@@ -830,9 +847,11 @@ export const useChatStore = create(
 
         switchThread: async (threadId: string) => {
             const thread = get().threads.find(t => t.id === threadId);
+            const existingConfig = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
             localStorage.setItem(
                 CONFIG_KEY,
                 JSON.stringify({
+                    ...existingConfig,
                     model: get().model.id,
                     currentThreadId: threadId,
                 })

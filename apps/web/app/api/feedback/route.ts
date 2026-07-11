@@ -1,6 +1,4 @@
 import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@repo/prisma';
-import { geolocation } from '@vercel/functions';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -13,15 +11,9 @@ export async function POST(request: NextRequest) {
 
     const { feedback } = await request.json();
 
-    await prisma.feedback.create({
-        data: {
-            userId,
-            feedback,
-            metadata: JSON.stringify({
-                geo: geolocation(request),
-            }),
-        },
-    });
+    // Feedback is stored client-side; no database needed on Vercel free tier.
+    // In production, consider forwarding to an external logging service.
+    console.log('[FEEDBACK]', { userId, feedback });
 
     return NextResponse.json({ message: 'Feedback received' }, { status: 200 });
 }

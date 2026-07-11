@@ -69,23 +69,23 @@
         --vaul-overlay-background-start: transparent;
         --vaul-overlay-background-end: rgba(0, 0, 0, 0.4);
 
-        --background: 199 15% 8%;
-        --foreground: 199 10% 98%;
+        --background: 220 12% 10%;
+        --foreground: 220 8% 95%;
 
-        --secondary: 199 15% 6%;
-        --secondary-foreground: 199 10% 98%;
+        --secondary: 220 10% 8%;
+        --secondary-foreground: 220 8% 92%;
 
-        --tertiary: 199 10% 4%;
-        --tertiary-foreground: 199 10% 98%;
+        --tertiary: 220 8% 6%;
+        --tertiary-foreground: 220 8% 92%;
 
-        --quaternary: 199 10% 2%;
-        --quaternary-foreground: 199 10% 98%;
+        --quaternary: 220 6% 4%;
+        --quaternary-foreground: 220 8% 92%;
 
-        --card: 199 20% 10%;
-        --card-foreground: 199 15% 90%;
+        --card: 220 12% 12%;
+        --card-foreground: 220 8% 90%;
 
-        --popover: 199 15% 4%;
-        --popover-foreground: 199 10% 96%;
+        --popover: 220 10% 8%;
+        --popover-foreground: 220 8% 94%;
 
         --brand: 199 95% 56%;
         --brand-foreground: 199 90% 96%;
@@ -93,16 +93,16 @@
         --accent: 199 75% 60%;
         --accent-foreground: 199 90% 96%;
 
-        --muted: 199 10% 20%;
-        --muted-foreground: 199 10% 70%;
+        --muted: 220 8% 18%;
+        --muted-foreground: 220 8% 60%;
 
         --destructive: 0 84% 60%;
         --destructive-foreground: 40 30% 98%;
 
-        --border: 199 10% 16%;
-        --soft: 199 10% 8%;
-        --hard: 199 10% 22%;
-        --input: 199 10% 16%;
+        --border: 220 8% 22%;
+        --soft: 220 8% 14%;
+        --hard: 220 8% 28%;
+        --input: 220 8% 20%;
         --ring: 199 50% 50%;
 
         --radius: 0.5rem;
@@ -152,6 +152,71 @@ html.dark .shiki span {
         /* IE and Edge */
         scrollbar-width: none;
         /* Firefox */
+    }
+
+    /* Glassmorphism — Apple-style liquid glass (enhanced, more translucent) */
+    .glass {
+        background: hsl(var(--background) / 0.3);
+        backdrop-filter: blur(28px) saturate(1.3);
+        -webkit-backdrop-filter: blur(28px) saturate(1.3);
+        border: 0.5px solid hsl(var(--border) / 0.15);
+        box-shadow: 0 2px 6px hsl(var(--foreground) / 0.03), 0 0 0 0.5px hsl(var(--border) / 0.06);
+    }
+
+    .glass-strong {
+        background: hsl(var(--background) / 0.45);
+        backdrop-filter: blur(44px) saturate(1.35);
+        -webkit-backdrop-filter: blur(44px) saturate(1.35);
+        border: 0.5px solid hsl(var(--border) / 0.2);
+        box-shadow: 0 4px 12px hsl(var(--foreground) / 0.04), 0 0 0 0.5px hsl(var(--border) / 0.1);
+    }
+
+    .glass-card {
+        background: hsl(var(--card) / 0.25);
+        backdrop-filter: blur(24px) saturate(1.2);
+        -webkit-backdrop-filter: blur(24px) saturate(1.2);
+        border: 0.5px solid hsl(var(--border) / 0.12);
+        box-shadow: 0 2px 8px hsl(var(--foreground) / 0.03);
+    }
+
+    .glass-ultra {
+        background: hsl(var(--background) / 0.55);
+        backdrop-filter: blur(60px) saturate(1.4);
+        -webkit-backdrop-filter: blur(60px) saturate(1.4);
+        border: 0.5px solid hsl(var(--border) / 0.25);
+        box-shadow: 0 8px 24px hsl(var(--foreground) / 0.06), 0 0 0 0.5px hsl(var(--border) / 0.14);
+    }
+
+    .dark .glass {
+        background: hsl(var(--background) / 0.3);
+        backdrop-filter: blur(32px) saturate(1.2);
+        -webkit-backdrop-filter: blur(32px) saturate(1.2);
+        border: 0.5px solid hsl(var(--border) / 0.12);
+        box-shadow: 0 2px 6px hsl(var(--foreground) / 0.02);
+    }
+
+    .dark .glass-strong {
+        background: hsl(var(--background) / 0.45);
+        backdrop-filter: blur(48px) saturate(1.3);
+        -webkit-backdrop-filter: blur(48px) saturate(1.3);
+        border: 0.5px solid hsl(var(--border) / 0.16);
+        box-shadow: 0 4px 12px hsl(var(--foreground) / 0.03);
+    }
+
+    .dark .glass-card {
+        background: hsl(var(--card) / 0.2);
+        backdrop-filter: blur(28px) saturate(1.15);
+        -webkit-backdrop-filter: blur(28px) saturate(1.15);
+        border: 0.5px solid hsl(var(--border) / 0.1);
+        box-shadow: 0 2px 8px hsl(var(--foreground) / 0.02);
+    }
+
+    .dark .glass-ultra {
+        background: hsl(var(--background) / 0.35);
+        backdrop-filter: blur(64px) saturate(1.25);
+        -webkit-backdrop-filter: blur(64px) saturate(1.25);
+        border: 0.5px solid hsl(var(--border) / 0.14);
+        box-shadow: 0 8px 24px hsl(var(--foreground) / 0.04);
     }
 }
 

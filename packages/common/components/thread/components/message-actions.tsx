@@ -1,8 +1,8 @@
 'use client';
-import { ChatModeOptions } from '@repo/common/components';
+import { ChatModeOptions, DownloadOutput, GrammarCheck } from '@repo/common/components';
 import { useAgentStream, useCopyText } from '@repo/common/hooks';
 import { useChatStore } from '@repo/common/store';
-import { ChatMode, getChatModeName } from '@repo/shared/config';
+import { ChatMode } from '@repo/shared/config';
 import { ThreadItem } from '@repo/shared/types';
 import { Button, DropdownMenu, DropdownMenuTrigger } from '@repo/ui';
 import { IconCheck, IconCopy, IconMarkdown, IconRefresh, IconTrash } from '@tabler/icons-react';
@@ -61,6 +61,13 @@ export const MessageActions = forwardRef<HTMLDivElement, MessageActionsProps>(
                         )}
                     </Button>
                 )}
+                {threadItem?.answer?.text && <GrammarCheck text={threadItem.answer.text} />}
+                {threadItem?.answer?.text && (
+                    <DownloadOutput
+                        content={threadItem.answer.text}
+                        title={`fluxai-${threadItem.id?.slice(0, 8)}`}
+                    />
+                )}
                 {threadItem.status !== 'ERROR' && threadItem.answer?.status !== 'HUMAN_REVIEW' && (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -99,11 +106,9 @@ export const MessageActions = forwardRef<HTMLDivElement, MessageActionsProps>(
                         <IconTrash size={16} strokeWidth={2} />
                     </Button>
                 )}
-                {threadItem.mode && (
-                    <p className="text-muted-foreground px-2 text-xs">
-                        Generated with {getChatModeName(threadItem.mode)}
-                    </p>
-                )}
+                <p className="text-muted-foreground px-2 text-xs">
+                    Generated with FluxAI
+                </p>
             </div>
         );
     }

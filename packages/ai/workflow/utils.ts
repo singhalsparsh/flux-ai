@@ -98,7 +98,7 @@ export const generateText = async ({
         const { fullStream } = !!messages?.length
             ? streamText({
                   system: prompt,
-                  model: selectedModel,
+                  model: selectedModel as any,
                   messages,
                   tools,
                   maxSteps,
@@ -107,7 +107,7 @@ export const generateText = async ({
               })
             : streamText({
                   prompt,
-                  model: selectedModel,
+                  model: selectedModel as any,
                   tools,
                   maxSteps,
                   toolChoice: toolChoice as any,
@@ -170,14 +170,14 @@ export const generateObject = async ({
         const { object } = !!messages?.length
             ? await generateObjectAi({
                   system: prompt,
-                  model: selectedModel,
+                  model: selectedModel as any,
                   schema,
                   messages,
                   abortSignal: signal,
               })
             : await generateObjectAi({
                   prompt,
-                  model: selectedModel,
+                  model: selectedModel as any,
                   schema,
                   abortSignal: signal,
               });

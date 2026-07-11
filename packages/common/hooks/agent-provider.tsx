@@ -6,7 +6,8 @@ import { buildCoreMessagesFromThreadItems, plausible } from '@repo/shared/utils'
 import { nanoid } from 'nanoid';
 import { useParams, useRouter } from 'next/navigation';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo } from 'react';
-import { useApiKeysStore, useAppStore, useChatStore, useLocalAIStore, useMcpToolsStore } from '../store';
+import { playCompletionPop } from '../components/completion-sound';
+import { estimateTokens, useApiKeysStore, useAppStore, useChatStore, useDailyTokenStore, useLocalAIStore, useMcpToolsStore } from '../store';
 import { useLocalLLM } from './use-local-llm';
 
 export type AgentContextType = {
@@ -60,7 +61,7 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
     const hasApiKeyForChatMode = useApiKeysStore(state => state.hasApiKeyForChatMode);
     const setShowSignInModal = useAppStore(state => state.setShowSignInModal);
     const localAIStore = useLocalAIStore();
-    const { generate: localGenerate, isLoaded: isLocalModelLoaded, isLoading: isLocalModelLoading } = useLocalLLM();
+    const { generate: localGenerate, abort: localAbort, loadModel: localLoadModel, isLoaded: isLocalModelLoaded, isLoading: isLocalModelLoading } = useLocalLLM();
 
     // Fetch remaining credits when user changes
     useEffect(() => {
@@ -147,6 +148,7 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
 
                 if (data.type === 'done') {
                     setIsGenerating(false);
+                    playCompletionPop();
                     setTimeout(fetchRemainingCredits, 1000);
                     if (data?.threadItemId) {
                         threadItemMap.delete(data.threadItemId);
@@ -262,6 +264,7 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
                                         }
                                     } else if (currentEvent === 'done' && data.type === 'done') {
                                         setIsGenerating(false);
+                                        playCompletionPop();
                                         const streamDuration = performance.now() - streamStartTime;
                                         console.log(
                                             'done event received',
@@ -404,48 +407,156 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
             });
 
             if (mode === ChatMode.LOCAL) {
+                // ── Daily token limit (unregistered users) ───────────────
+                if (!isSignedIn) {
+                    const dailyStore = useDailyTokenStore.getState();
+                    dailyStore.refresh();
+                    const remaining = dailyStore.getRemaining();
+                    if (remaining <= 0) {
+                        const errMsg = 'You have reached your daily Local AI token limit (5M tokens). Sign in for unlimited use, or try again tomorrow.';
+                        setIsGenerating(false);
+                        updateThreadItem(threadId, {
+                            id: optimisticAiThreadItemId,
+                            status: 'ERROR',
+                            error: errMsg,
+                            persistToDB: true,
+                        });
+                        return;
+                    }
+                }
+
                 // ── Local AI mode ──────────────────────────────────────────
-                if (!isLocalModelLoaded && !isLocalModelLoading) {
-                    const errMsg = 'No local model loaded. Please go to Settings → Local AI to load a model first.';
-                    setIsGenerating(false);
-                    updateThreadItem(threadId, {
-                        id: optimisticAiThreadItemId,
-                        status: 'ERROR',
-                        error: errMsg,
-                        persistToDB: true,
-                    });
-                    return;
+                if (!isLocalModelLoaded) {
+                    // If a model was previously loaded, load it on-demand instead of erroring
+                    if (isLocalModelLoading) {
+                        // If already loading (e.g. from auto-load useEffect), wait for it
+                        try {
+                            await localLoadModel(localAIStore.loadedModelId || localAIStore.selectedModelId || '');
+                            // If success, fall through to generation below
+                        } catch {
+                            const errMsg = 'Local AI model loading failed. Please go to Settings → Local AI and try again.';
+                            setIsGenerating(false);
+                            updateThreadItem(threadId, {
+                                id: optimisticAiThreadItemId,
+                                status: 'ERROR',
+                                error: errMsg,
+                                persistToDB: true,
+                            });
+                            return;
+                        }
+                    } else {
+                        // Try to load the previously used model from cache
+                        const modelId = localAIStore.loadedModelId || localAIStore.selectedModelId;
+                        if (modelId) {
+                            try {
+                                await localLoadModel(modelId);
+                                // Re-check: if loading succeeded, continue below
+                            } catch {
+                                const errMsg = 'Failed to load the local AI model. Please go to Settings → Local AI and try again.';
+                                setIsGenerating(false);
+                                updateThreadItem(threadId, {
+                                    id: optimisticAiThreadItemId,
+                                    status: 'ERROR',
+                                    error: errMsg,
+                                    persistToDB: true,
+                                });
+                                return;
+                            }
+                        } else {
+                            const errMsg = 'No local model loaded. Please go to Settings → Local AI to load a model first.';
+                            setIsGenerating(false);
+                            updateThreadItem(threadId, {
+                                id: optimisticAiThreadItemId,
+                                status: 'ERROR',
+                                error: errMsg,
+                                persistToDB: true,
+                            });
+                            return;
+                        }
+                    }
                 }
 
                 const abortController = new AbortController();
                 setAbortController(abortController);
 
                 abortController.signal.addEventListener('abort', () => {
+                    localAbort();
                     setIsGenerating(false);
-                    updateThreadItem(threadId, { id: optimisticAiThreadItemId, status: 'ABORTED' });
+                    const currentText = localAIStore.streaming.currentText;
+                    updateThreadItem(threadId, {
+                        id: optimisticAiThreadItemId,
+                        status: 'ABORTED',
+                        answer: currentText ? { text: currentText } : undefined,
+                        persistToDB: true,
+                    });
                 });
 
                 try {
-                    // Convert core messages to local LLM format (role/content strings)
-                    const localMessages = coreMessages.map(m => ({
-                        role: m.role,
-                        content: typeof m.content === 'string' ? m.content : '',
-                    }));
+                    // Prepend custom instructions as system message (if provided)
+                    // This prevents the model from defaulting to its internal greeting
+                    const localMessages: { role: string; content: string }[] = coreMessages.map(m => {
+                        let content = '';
+                        if (typeof m.content === 'string') {
+                            content = m.content;
+                        } else if (Array.isArray(m.content)) {
+                            content = m.content
+                                .map(part => {
+                                    if (part.type === 'text') return part.text;
+                                    if (part.type === 'image') return '[Image attached — local model may not support vision]';
+                                    return '';
+                                })
+                                .filter(Boolean)
+                                .join('\n');
+                        }
+                        return { role: m.role, content };
+                    });
+
+                    if (customInstructions) {
+                        localMessages.unshift({ role: 'system', content: customInstructions });
+                    }
 
                     // Start generation
                     updateThreadItem(threadId, {
                         id: optimisticAiThreadItemId,
-                        status: 'GENERATING',
+                        status: 'PENDING',
+                        answer: { text: '' },
                     });
 
-                    const fullText = await localGenerate(localMessages);
+                    // Fire-and-forget the generation, then poll store for streaming updates
+                    const genPromise = localGenerate(localMessages);
 
+                    // Poll for streaming text and update thread item incrementally
+                    let lastText = '';
+                    const pollInterval = setInterval(() => {
+                        const currentText = localAIStore.streaming.currentText;
+                        if (currentText && currentText !== lastText) {
+                            lastText = currentText;
+                            updateThreadItem(threadId, {
+                                id: optimisticAiThreadItemId,
+                                answer: { text: currentText },
+                            });
+                        }
+                    }, 250);
+
+                    const fullText = await genPromise;
+                    clearInterval(pollInterval);
+
+                    // Final update with complete text
                     updateThreadItem(threadId, {
                         id: optimisticAiThreadItemId,
                         status: 'COMPLETED',
-                        answer: { text: fullText },
+                        answer: { text: fullText || lastText },
                         persistToDB: true,
                     });
+
+                    playCompletionPop();
+
+                    // Consume from daily token limit (unregistered users only)
+                    if (!isSignedIn) {
+                        const outputText = fullText || lastText || '';
+                        const tokensUsed = estimateTokens(outputText);
+                        useDailyTokenStore.getState().tryConsume(tokensUsed);
+                    }
 
                     setTimeout(fetchRemainingCredits, 1000);
                 } catch (err: any) {
@@ -480,7 +591,10 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
                     threadItemId: optimisticAiThreadItemId,
                     parentThreadItemId: '',
                     customInstructions,
-                    apiKeys: Object.fromEntries(Object.entries(apiKeys()).map(([k, v]) => [k, Array.isArray(v) ? v[0] || '' : v])),
+                    apiKeys: {
+                        ...Object.fromEntries(Object.entries(apiKeys()).map(([k, v]) => [k, Array.isArray(v) ? v[0] || '' : v])),
+                        _keyArrays: apiKeys() as any,
+                    },
                 });
             } else {
                 runAgent({
@@ -518,6 +632,8 @@ export const AgentProvider = ({ children }: { children: ReactNode }) => {
             isLocalModelLoaded,
             isLocalModelLoading,
             localGenerate,
+            localLoadModel,
+            localAIStore,
             fetchRemainingCredits,
         ]
     );

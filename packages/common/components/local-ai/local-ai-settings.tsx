@@ -64,9 +64,9 @@ function DeviceCheckDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent ariaTitle="Device Check" className="!max-w-md">
-                <div className="flex flex-col gap-4">
-                    <h3 className="text-lg font-bold">Device Compatibility Check</h3>
+            <DialogContent ariaTitle="Device Check" className="!max-w-md max-sm:!max-w-[92vw]">
+                <div className="flex flex-col gap-4 max-sm:gap-3">
+                    <h3 className="text-lg font-bold max-sm:text-base">Device Compatibility Check</h3>
 
                     <div className="bg-secondary rounded-lg p-3">
                         <div className="mb-2 flex items-center gap-2">
@@ -143,6 +143,9 @@ function TierSection({
 }) {
     const downloadedModels = useLocalAIStore(state => state.downloadedModels);
     const selectedModelId = useLocalAIStore(state => state.selectedModelId);
+    const loadedModelId = useLocalAIStore(state => state.loadedModelId);
+    const isModelLoaded = useLocalAIStore(state => state.isModelLoaded);
+    const isLoading = useLocalAIStore(state => state.isLoading);
 
     if (models.length === 0) return null;
 
@@ -155,6 +158,12 @@ function TierSection({
                 {models.map(model => {
                     const isDownloaded = downloadedModels.includes(model.id);
                     const isSelected = selectedModelId === model.id;
+                    const isCurrentlyLoaded = loadedModelId === model.id && isModelLoaded;
+                    // Allow re-loading if downloaded but not currently loaded
+                    const canReload = isDownloaded && !isCurrentlyLoaded;
+                    const isThisModelLoading = isLoading && (selectedModelId === model.id || loadedModelId === model.id);
+                    const buttonLabel = isCurrentlyLoaded ? 'Loaded' : isThisModelLoading ? 'Loading...' : canReload ? 'Load' : isDownloaded ? 'Downloaded' : 'Load';
+                    const buttonDisabled = isCurrentlyLoaded || isThisModelLoading;
                     return (
                         <div
                             key={model.id}
@@ -183,16 +192,16 @@ function TierSection({
                                 </div>
                                 <Button
                                     size="xs"
-                                    variant={isDownloaded ? 'secondary' : 'default'}
-                                    disabled={isDownloaded}
+                                    variant={isCurrentlyLoaded ? 'secondary' : 'default'}
+                                    disabled={buttonDisabled}
                                     className={
-                                        isDownloaded
+                                        isCurrentlyLoaded
                                             ? 'text-muted-foreground/50 cursor-not-allowed opacity-50'
                                             : ''
                                     }
                                     onClick={() => onLoadModel(model)}
                                 >
-                                    {isDownloaded ? 'Downloaded' : 'Load'}
+                                    {buttonLabel}
                                 </Button>
                             </div>
                         </div>
@@ -291,7 +300,7 @@ export function LocalAISettings() {
             )}
 
             {/* Model list grouped by tier */}
-            <div className="no-scrollbar max-h-[400px] overflow-y-auto">
+            <div className="no-scrollbar max-h-[400px] overflow-y-auto max-sm:max-h-[50vh]">
                 {groupedModels.map(group => (
                     <TierSection
                         key={group.tier}

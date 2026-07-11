@@ -34,3 +34,10 @@ yarn-error.log*
 # turbo
 .turbo
 
+
+# build artifacts
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# claude code
+.claude/

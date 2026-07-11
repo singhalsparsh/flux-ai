@@ -20,7 +20,7 @@ export const Footer = () => {
         },
     ];
     return (
-        <div className="flex w-full flex-row items-center justify-center gap-4 p-3">
+        <div className="glass-card mx-auto flex w-fit flex-row items-center justify-center gap-4 rounded-full px-5 py-2">
             <span className="text-muted-foreground text-xs opacity-50">FluxAI</span>
             {links.map(link => (
                 <Link

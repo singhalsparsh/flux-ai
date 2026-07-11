@@ -168,7 +168,7 @@ export default function ThreadsPage() {
                                 </div>
                                 <Button variant="default" size="sm" onClick={() => push('/chat')}>
                                     <IconPlus size={14} strokeWidth="2" />
-                                    New Thread
+                                    New Chat
                                 </Button>
                             </div>
                         )}

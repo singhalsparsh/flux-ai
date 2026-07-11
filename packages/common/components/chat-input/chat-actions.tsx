@@ -1,7 +1,7 @@
 'use client';
 import { useUser } from '@clerk/nextjs';
 import { DotSpinner } from '@repo/common/components';
-import { useApiKeysStore, useChatStore } from '@repo/common/store';
+import { useApiKeysStore, useChatStore, useLocalAIStore } from '@repo/common/store';
 import { CHAT_MODE_CREDIT_COSTS, ChatMode, ChatModeConfig } from '@repo/shared/config';
 import {
     Button,
@@ -17,6 +17,7 @@ import {
 import {
     IconArrowUp,
     IconAtom,
+    IconBrandOpenai,
     IconChevronDown,
     IconCpu,
     IconNorthStar,
@@ -27,7 +28,9 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { BYOKIcon, NewIcon } from '../icons';
+import { useLocalLLM } from '../../hooks/use-local-llm';
 
 export const chatOptions = [
     {
@@ -46,38 +49,36 @@ export const chatOptions = [
     },
 ];
 
-// Smart API-based models
+// Smart API-based models (Mistral always available via server)
 export const smartModelOptions = [
-    {
-        label: 'Mistral Large',
-        value: ChatMode.MISTRAL_LARGE,
-        icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.MISTRAL_LARGE],
-    },
-    {
-        label: 'Mistral Small',
-        value: ChatMode.MISTRAL_SMALL,
-        icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.MISTRAL_SMALL],
-    },
-    {
-        label: 'Codestral',
-        value: ChatMode.CODESTRAL,
-        icon: undefined,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.CODESTRAL],
-    },
+    { label: 'Mistral Large', value: ChatMode.MISTRAL_LARGE, creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.MISTRAL_LARGE] },
+    { label: 'Mistral Small', value: ChatMode.MISTRAL_SMALL, creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.MISTRAL_SMALL] },
+    { label: 'Codestral', value: ChatMode.CODESTRAL, creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.CODESTRAL] },
 ];
 
-// Local model (run locally via WebGPU in the browser)
-export const localModelOptions = [
-    {
-        label: 'Local AI',
-        description: 'Run models locally in your browser using WebGPU',
-        value: ChatMode.LOCAL,
-        icon: <IconCpu size={16} className="text-muted-foreground" strokeWidth={2} />,
-        creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.LOCAL],
-    },
+// BYOK models — require user's own API key
+export const byokModelOptions = [
+    { label: 'GPT-4o Mini', value: ChatMode.GPT4o_MINI, provider: 'openai' },
+    { label: 'GPT-4o', value: ChatMode.GPT4o, provider: 'openai' },
+    { label: 'o4-mini', value: ChatMode.O4_MINI, provider: 'openai' },
+    { label: 'Claude 3.5 Sonnet', value: ChatMode.CLAUDE_SONNET_35, provider: 'anthropic' },
+    { label: 'Claude 3.7 Sonnet', value: ChatMode.CLAUDE_SONNET_37, provider: 'anthropic' },
+    { label: 'Gemini 2.0 Flash', value: ChatMode.GEMINI_FLASH, provider: 'gemini' },
+    { label: 'DeepSeek R1', value: ChatMode.DEEPSEEK_R1, provider: 'deepseek' },
+    { label: 'DeepSeek V3', value: ChatMode.DEEPSEEK_V3, provider: 'deepseek' },
+    { label: 'Llama 4 Scout', value: ChatMode.LLAMA4_SCOUT, provider: 'together' },
 ];
+
+// Local AI — dynamic label based on loaded model
+export const getLocalModelOption = (loadedModelId: string | null) => ({
+    label: loadedModelId ? `Local — ${loadedModelId.split('-')[0]}...` : 'Local AI',
+    description: loadedModelId
+        ? `Using ${loadedModelId}`
+        : 'Run models locally in your browser using WebGPU',
+    value: ChatMode.LOCAL,
+    icon: <IconCpu size={16} className="text-muted-foreground" strokeWidth={2} />,
+    creditCost: CHAT_MODE_CREDIT_COSTS[ChatMode.LOCAL],
+});
 
 export const AttachmentButton = () => {
     return (
@@ -101,14 +102,14 @@ export const ChatModeButton = () => {
     const hasApiKeyForChatMode = useApiKeysStore(state => state.hasApiKeyForChatMode);
     const isChatPage = usePathname().startsWith('/chat');
 
-    // Show SMART or Local based on selected mode
     const isSmartMode = smartModelOptions.some(o => o.value === chatMode);
-    const displayLabel = isSmartMode ? 'SMART' : 'Local';
+    const isByokMode = byokModelOptions.some(o => o.value === chatMode);
+    const displayLabel = isSmartMode ? 'SMART' : isByokMode ? 'BYOK' : 'Local';
 
     return (
         <DropdownMenu open={isChatModeOpen} onOpenChange={setIsChatModeOpen}>
             <DropdownMenuTrigger asChild>
-                <Button variant={'secondary'} size="xs">
+                <Button variant={'glass'} size="xs">
                     {!isSmartMode && <IconAtom size={14} className="text-muted-foreground" strokeWidth={2} />}
                     <span className="text-xs font-semibold">{displayLabel}</span>
                     <IconChevronDown size={14} strokeWidth={2} />
@@ -131,7 +132,7 @@ export const WebSearchButton = () => {
         <Button
             size={useWebSearch ? 'sm' : 'icon-sm'}
             tooltip="Web Search"
-            variant={useWebSearch ? 'secondary' : 'ghost'}
+            variant={useWebSearch ? 'default' : 'glass'}
             className={cn('gap-2', useWebSearch && 'bg-blue-500/10 text-blue-500')}
             onClick={() => setUseWebSearch(!useWebSearch)}
         >
@@ -166,6 +167,64 @@ export const GeneratingStatus = () => {
     );
 };
 
+export const ChatModeLocalOption = ({
+    localOption,
+    localAIStore,
+    setChatMode,
+}: {
+    localOption: ReturnType<typeof getLocalModelOption>;
+    localAIStore: { loadedModelId: string | null; selectedModelId: string | null; isModelLoaded: boolean; isLoading: boolean };
+    setChatMode: (mode: ChatMode) => void;
+}) => {
+    const { loadModel } = useLocalLLM();
+    const localModelName = localAIStore.loadedModelId
+        ? localAIStore.loadedModelId.split('-')[0] + '...'
+        : null;
+
+    return (
+        <DropdownMenuGroup>
+            <DropdownMenuLabel className="text-brand mt-1 text-xs font-semibold uppercase tracking-wider">
+                📍 {localModelName ? `Local — ${localModelName}` : 'Local'}
+            </DropdownMenuLabel>
+            <DropdownMenuItem
+                onSelect={() => {
+                    setChatMode(localOption.value);
+                    // Start loading the model on-demand so it's ready by the time user sends a message
+                    const modelId = localAIStore.loadedModelId || localAIStore.selectedModelId;
+                    if (modelId && !localAIStore.isModelLoaded) {
+                        loadModel(modelId).catch(err => {
+                            console.warn('Failed to pre-load local model:', err);
+                        });
+                    } else if (!modelId) {
+                        toast.error('No local model configured. Open Settings → Local AI to download a model.');
+                    }
+                }}
+                className="h-auto"
+            >
+                <div className="flex w-full flex-row items-start gap-1.5 px-1.5 py-1.5">
+                    <div className="flex flex-col gap-0 pt-1">{localOption.icon}</div>
+                    <div className="flex flex-col gap-0">
+                        {<p className="m-0 text-sm font-medium">{localOption.label}</p>}
+                        {localOption.description && (
+                            <p className="text-muted-foreground text-xs font-light">
+                                {localOption.description}
+                            </p>
+                        )}
+                    </div>
+                    <div className="flex-1" />
+                    {localAIStore.isLoading && (
+                        <span className="text-brand text-[10px] font-medium animate-pulse">Loading...</span>
+                    )}
+                    {!localAIStore.isLoading && localAIStore.isModelLoaded && (
+                        <span className="text-green-600 text-[10px] font-medium">Loaded</span>
+                    )}
+                    {ChatModeConfig[localOption.value]?.isNew && <NewIcon />}
+                </div>
+            </DropdownMenuItem>
+        </DropdownMenuGroup>
+    );
+};
+
 export const ChatModeOptions = ({
     chatMode,
     setChatMode,
@@ -179,6 +238,10 @@ export const ChatModeOptions = ({
     const hasApiKeyForChatMode = useApiKeysStore(state => state.hasApiKeyForChatMode);
     const isChatPage = usePathname().startsWith('/chat');
     const { push } = useRouter();
+
+    const localAIStore = useLocalAIStore();
+    const localOption = getLocalModelOption(localAIStore.loadedModelId);
+
     return (
         <DropdownMenuContent
             align="start"
@@ -212,39 +275,39 @@ export const ChatModeOptions = ({
                     </DropdownMenuItem>
                 ))}
             </DropdownMenuGroup>
+
             {isChatPage && (
                 <DropdownMenuGroup>
                     <DropdownMenuLabel className="text-brand mt-1 text-xs font-semibold uppercase tracking-wider">
-                        📍 Local
+                        🔑 BYOK
                     </DropdownMenuLabel>
-                    {localModelOptions.map(option => (
+                    {byokModelOptions.map(option => (
                         <DropdownMenuItem
                             key={option.label}
                             onSelect={() => {
-                                if (ChatModeConfig[option.value]?.isAuthRequired && !isSignedIn) {
-                                    push('/sign-in');
-                                    return;
-                                }
                                 setChatMode(option.value);
                             }}
                             className="h-auto"
                         >
-                            <div className="flex w-full flex-row items-start gap-1.5 px-1.5 py-1.5">
-                                <div className="flex flex-col gap-0 pt-1">{option.icon}</div>
+                            <div className="flex w-full flex-row items-center gap-2.5 px-1.5 py-1.5">
                                 <div className="flex flex-col gap-0">
-                                    {<p className="m-0 text-sm font-medium">{option.label}</p>}
-                                    {option.description && (
-                                        <p className="text-muted-foreground text-xs font-light">
-                                            {option.description}
-                                        </p>
-                                    )}
+                                    {<p className="text-sm font-medium">{option.label}</p>}
                                 </div>
                                 <div className="flex-1" />
-                                {ChatModeConfig[option.value]?.isNew && <NewIcon />}
+                                <span className="text-[10px] text-muted-foreground/60">{option.provider}</span>
+                                {hasApiKeyForChatMode(option.value) && <BYOKIcon />}
                             </div>
                         </DropdownMenuItem>
                     ))}
                 </DropdownMenuGroup>
+            )}
+
+            {isChatPage && (
+                <ChatModeLocalOption
+                    localOption={localOption}
+                    localAIStore={localAIStore}
+                    setChatMode={setChatMode}
+                />
             )}
         </DropdownMenuContent>
     );

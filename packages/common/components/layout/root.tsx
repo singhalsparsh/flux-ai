@@ -1,7 +1,6 @@
 'use client';
 import {
     CommandSearch,
-    FeedbackWidget,
     IntroDialog,
     Preloader,
     SettingsModal,
@@ -12,7 +11,7 @@ import { AgentProvider } from '@repo/common/hooks';
 import { useAppStore } from '@repo/common/store';
 import { plausible } from '@repo/shared/utils';
 import { Badge, Button, Flex, Toaster } from '@repo/ui';
-import { IconX } from '@tabler/icons-react';
+import { IconMenu2, IconX } from '@tabler/icons-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { FC, useEffect } from 'react';
@@ -28,7 +27,7 @@ export const RootLayout: FC<TRootLayout> = ({ children }) => {
     const setIsSettingOpen = useAppStore(state => state.setIsSettingsOpen);
 
     const containerClass =
-        'relative flex flex-1 flex-row h-[calc(99dvh)] border border-border rounded-sm bg-secondary w-full overflow-hidden shadow-sm';
+        'glass-strong relative flex flex-1 flex-row h-[calc(99dvh)] border border-border rounded-sm w-full overflow-hidden shadow-sm';
 
     useEffect(() => {
         plausible.trackPageview();
@@ -48,9 +47,10 @@ export const RootLayout: FC<TRootLayout> = ({ children }) => {
             >
                 <Drawer.Portal>
                     <Drawer.Overlay className="fixed inset-0 z-30 backdrop-blur-sm" />
-                    <Drawer.Content className="fixed bottom-0 left-0 top-0 z-[50]">
-                        <Flex className="pr-2">
-                            <Sidebar />
+                    <Drawer.Content className="fixed bottom-0 left-0 top-0 z-[50] !h-full !max-w-[260px]">
+                        <Drawer.Title className="sr-only">Navigation Menu</Drawer.Title>
+                        <Flex className="relative h-full pr-2">
+                            <Sidebar forceOpen />
                         </Flex>
                     </Drawer.Content>
                 </Drawer.Portal>
@@ -63,14 +63,12 @@ export const RootLayout: FC<TRootLayout> = ({ children }) => {
                         <div className={containerClass}>
                             <div className="relative flex h-full w-0 flex-1 flex-row">
                                 <div className="flex w-full flex-col gap-2 overflow-y-auto">
-                                    <div className="from-secondary to-secondary/0 via-secondary/70 absolute left-0 right-0 top-0 z-40 flex flex-row items-center justify-center gap-1 bg-gradient-to-b p-2 pb-12"></div>
                                     {/* Auth Button Header */}
 
                                     {children}
                                 </div>
                             </div>
                             <SideDrawer />
-                            <FeedbackWidget />
                             <IntroDialog />
                         </div>
                     </AgentProvider>
@@ -78,6 +76,23 @@ export const RootLayout: FC<TRootLayout> = ({ children }) => {
                 <SettingsModal />
                 <CommandSearch />
             </Flex>
+
+            {/* Mobile sidebar toggle — top-left corner, hidden when sidebar is open, hidden on desktop */}
+            <AnimatePresence>
+                {!isMobileSidebarOpen && (
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ delay: 0.3, duration: 0.2 }}
+                        onClick={() => setIsMobileSidebarOpen(true)}
+                        className="glass-ultra fixed left-4 top-4 z-[60] flex items-center justify-center rounded-full p-3 shadow-xl lg:hidden"
+                        aria-label="Open navigation menu"
+                    >
+                        <IconMenu2 size={22} strokeWidth={2} className="text-foreground" />
+                    </motion.button>
+                )}
+            </AnimatePresence>
 
             <Toaster />
             <Preloader />

@@ -2,11 +2,12 @@
 import { useMcpToolsStore } from '@repo/common/store';
 import { Alert, AlertDescription, DialogFooter } from '@repo/ui';
 import { Button } from '@repo/ui/src/components/button';
-import { IconBolt, IconBoltFilled, IconCpu, IconDatabase, IconKey, IconSettings2, IconTrash } from '@tabler/icons-react';
+import { IconBolt, IconBoltFilled, IconCpu, IconDatabase, IconFileTypePdf, IconKey, IconSettings2, IconSun, IconTrash } from '@tabler/icons-react';
 
-import { Badge, Dialog, DialogContent, Input } from '@repo/ui';
+import { Badge, cn, Dialog, DialogContent, Input } from '@repo/ui';
 
 import { useChatEditor } from '@repo/common/hooks';
+import { useTheme } from 'next-themes';
 import moment from 'moment';
 import { useCallback, useEffect, useState } from 'react';
 import { PROVIDER_IDS, PROVIDER_INFO, useApiKeysStore } from '../store/api-keys.store';
@@ -15,6 +16,7 @@ import { useChatStore, useLocalAIStore } from '../store';
 import { ChatEditor } from './chat-input';
 import { LocalAISettings } from './local-ai/local-ai-settings';
 import { BYOKIcon, ToolIcon } from './icons';
+import { ExportReportButton } from './export-report';
 
 export const SettingsModal = () => {
     const isSettingOpen = useAppStore(state => state.isSettingsOpen);
@@ -28,6 +30,12 @@ export const SettingsModal = () => {
             title: 'Customize',
             key: SETTING_TABS.PERSONALIZATION,
             component: <PersonalizationSettings />,
+        },
+        {
+            icon: <IconSun size={16} strokeWidth={2} className="text-muted-foreground" />,
+            title: 'Theme',
+            key: SETTING_TABS.THEME,
+            component: <ThemeSettings />,
         },
         {
             icon: <IconBolt size={16} strokeWidth={2} className="text-muted-foreground" />,
@@ -53,23 +61,29 @@ export const SettingsModal = () => {
             key: SETTING_TABS.STORAGE,
             component: <StorageSettings />,
         },
+        {
+            icon: <IconFileTypePdf size={16} strokeWidth={2} className="text-muted-foreground" />,
+            title: 'Export',
+            key: SETTING_TABS.EXPORT,
+            component: <ExportSettings />,
+        },
     ];
 
     return (
         <Dialog open={isSettingOpen} onOpenChange={() => setIsSettingOpen(false)}>
             <DialogContent
                 ariaTitle="Settings"
-                className="h-full max-h-[600px] !max-w-[760px] overflow-x-hidden rounded-xl p-0"
+                className="glass-ultra h-full max-h-[600px] !max-w-[760px] overflow-x-hidden rounded-xl p-0 max-sm:!max-w-[96vw] max-sm:!max-h-[85dvh] max-sm:rounded-lg"
             >
                 <div className="no-scrollbar relative max-w-full overflow-y-auto overflow-x-hidden">
                     <h3 className="border-border mx-5 border-b py-4 text-lg font-bold">Settings</h3>
-                    <div className="flex flex-row gap-6 p-4">
-                        <div className="flex w-[160px] shrink-0 flex-col gap-1">
+                    <div className="flex flex-row gap-6 p-4 max-sm:flex-col max-sm:gap-3 max-sm:p-3">
+                        <div className="flex w-[160px] shrink-0 flex-col gap-1 max-sm:w-full max-sm:flex-row max-sm:overflow-x-auto max-sm:pb-1">
                             {settingMenu.map(setting => (
                                 <Button
                                     key={setting.key}
                                     rounded="full"
-                                    className="justify-start"
+                                    className="justify-start max-sm:shrink-0 max-sm:text-xs"
                                     variant={settingTab === setting.key ? 'secondary' : 'ghost'}
                                     onClick={() => setSettingTab(setting.key)}
                                 >
@@ -78,7 +92,7 @@ export const SettingsModal = () => {
                                 </Button>
                             ))}
                         </div>
-                        <div className="flex flex-1 flex-col overflow-hidden px-4">
+                        <div className="flex flex-1 flex-col overflow-hidden px-4 max-sm:px-2">
                             {settingMenu.find(setting => setting.key === settingTab)?.component}
                         </div>
                     </div>
@@ -346,7 +360,7 @@ export const ApiKeySettings = () => {
                 className="mb-2"
             />
 
-            <div className="no-scrollbar flex max-h-[400px] flex-col gap-2 overflow-y-auto">
+            <div className="no-scrollbar flex max-h-[400px] flex-col gap-2 overflow-y-auto max-sm:max-h-[40vh]">
                 {providerList.map(([id, info]) => {
                     const keys = apiKeys[id] || [];
                     return (
@@ -531,6 +545,119 @@ export const PersonalizationSettings = () => {
     );
 };
 
+const ACCENT_COLORS = [
+    { name: 'Ocean', value: '#0ea5e9', variable: '199 95% 56%' },   // brand
+    { name: 'Emerald', value: '#10b981', variable: '160 85% 45%' },
+    { name: 'Violet', value: '#8b5cf6', variable: '260 85% 60%' },
+    { name: 'Rose', value: '#f43f5e', variable: '348 90% 58%' },
+    { name: 'Amber', value: '#f59e0b', variable: '38 95% 50%' },
+    { name: 'Cyan', value: '#06b6d4', variable: '188 95% 48%' },
+    { name: 'Lime', value: '#84cc16', variable: '80 85% 45%' },
+    { name: 'Pink', value: '#ec4899', variable: '330 85% 60%' },
+];
+
+export const ThemeSettings = () => {
+    const { theme, setTheme } = useTheme();
+
+    const handleAccentChange = (accent: string, variable: string) => {
+        // Store the accent hue values for the brand/accent CSS variables
+        localStorage.setItem('accent-color-css', variable);
+        // Apply to :root via document.documentElement style
+        const root = document.documentElement;
+        const [h, s, l] = variable.split(' ').map(v => parseFloat(v));
+        root.style.setProperty('--brand', `${h} ${s}% ${l}%`);
+        root.style.setProperty('--brand-foreground', `${h} 90% 96%`);
+        // Also update accent to a slightly different variant
+        root.style.setProperty('--accent', `${h} 85% ${Math.min(l + 10, 80)}%`);
+        root.style.setProperty('--accent-foreground', `${h} 90% 96%`);
+        // Persist the accent name for reference
+        localStorage.setItem('fluxai-accent', accent);
+    };
+
+    // Restore accent on mount
+    useEffect(() => {
+        const savedAccent = localStorage.getItem('accent-color-css');
+        if (savedAccent) {
+            const root = document.documentElement;
+            const [h, s, l] = savedAccent.split(' ').map(v => parseFloat(v));
+            if (!isNaN(h)) {
+                root.style.setProperty('--brand', `${h} ${s}% ${l}%`);
+                root.style.setProperty('--brand-foreground', `${h} 90% 96%`);
+                root.style.setProperty('--accent', `${h} 85% ${Math.min(l + 10, 80)}%`);
+                root.style.setProperty('--accent-foreground', `${h} 90% 96%`);
+            }
+        }
+    }, []);
+
+    return (
+        <div className="flex flex-col gap-6 pb-3">
+            <div className="flex flex-col">
+                <h3 className="text-base font-semibold">Theme</h3>
+                <p className="text-muted-foreground text-sm">
+                    Switch between dark and light mode, or choose an accent color.
+                </p>
+            </div>
+
+            {/* Dark / Light Toggle */}
+            <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium">Mode</span>
+                <div className="flex flex-row gap-2">
+                    {[
+                        { key: 'light', label: 'Light', icon: '☀️' },
+                        { key: 'dark', label: 'Dark', icon: '🌙' },
+                        { key: 'system', label: 'System', icon: '💻' },
+                    ].map(option => (
+                        <button
+                            key={option.key}
+                            onClick={() => setTheme(option.key)}
+                            className={cn(
+                                'flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition-all max-sm:px-2 max-sm:py-2 max-sm:text-xs',
+                                theme === option.key
+                                    ? 'border-brand bg-brand/10 text-brand shadow-subtle-xs'
+                                    : 'border-border bg-background/50 text-muted-foreground hover:bg-tertiary'
+                            )}
+                        >
+                            <span>{option.icon}</span>
+                            {option.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Accent Color Picker */}
+            <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium">Accent Color</span>
+                <div className="flex flex-row flex-wrap gap-2 max-sm:gap-1.5">
+                    {ACCENT_COLORS.map(color => {
+                        const isActive = (localStorage.getItem('fluxai-accent') || 'Ocean') === color.name;
+                        return (
+                            <button
+                                key={color.name}
+                                onClick={() => handleAccentChange(color.value, color.variable)}
+                                className={cn(
+                                    'flex h-10 w-10 items-center justify-center rounded-full transition-all max-sm:h-8 max-sm:w-8',
+                                    isActive && 'ring-2 ring-offset-2 ring-offset-background'
+                                )}
+                                style={{ backgroundColor: color.value }}
+                                title={color.name}
+                            >
+                                {isActive && (
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+                <p className="text-muted-foreground text-xs">
+                    Accent color applies to buttons, links, and highlights throughout the UI.
+                </p>
+            </div>
+        </div>
+    );
+};
+
 export const StorageSettings = () => {
     const clearAllThreads = useChatStore(state => state.clearAllThreads);
     const clearDownloadedModels = useLocalAIStore(state => state.clearDownloadedModels);
@@ -562,12 +689,32 @@ export const StorageSettings = () => {
             const dbs = await indexedDB.databases?.();
             if (dbs) {
                 for (const db of dbs) {
-                    if (db.name?.includes('webllm') || db.name?.includes('mlc')) {
+                    if (db.name?.includes('webllm') || db.name?.includes('mlc') || db.name?.includes('llm')) {
                         indexedDB.deleteDatabase(db.name);
                     }
                 }
+            } else {
+                // Fallback: delete known databases
+                indexedDB.deleteDatabase('webllm');
+                indexedDB.deleteDatabase('mlc');
+                indexedDB.deleteDatabase('webllm_cache');
             }
+
+            // Clear any cached model blobs
+            if ('caches' in window) {
+                try {
+                    const cacheKeys = await caches.keys();
+                    for (const key of cacheKeys) {
+                        if (key.includes('webllm') || key.includes('mlc') || key.includes('llm')) {
+                            await caches.delete(key);
+                        }
+                    }
+                } catch { /* ignore */ }
+            }
+
             clearDownloadedModels();
+            // Wait a tick for databases to be deleted, then re-estimate
+            await new Promise(r => setTimeout(r, 500));
             await estimateStorage();
         } catch {
             console.error('Failed to clear model cache');
@@ -576,11 +723,42 @@ export const StorageSettings = () => {
         }
     }, [clearDownloadedModels, estimateStorage]);
 
-    const handleFactoryReset = () => {
+    const handleFactoryReset = async () => {
         if (confirm('This will clear all data including chat history, API keys, and settings. Are you sure?')) {
             clearAllThreads();
             clearDownloadedModels();
+
+            // Clear IndexedDB databases
+            try {
+                const dbs = await indexedDB.databases?.();
+                if (dbs) {
+                    for (const db of dbs) {
+                        if (db.name) {
+                            indexedDB.deleteDatabase(db.name);
+                        }
+                    }
+                }
+            } catch {
+                // Fallback: delete known databases
+                indexedDB.deleteDatabase('ThreadDatabase');
+                indexedDB.deleteDatabase('webllm');
+                indexedDB.deleteDatabase('mlc');
+            }
+
+            // Clear all cached storage
+            if (navigator.storage?.estimate) {
+                try {
+                    // Request persistent storage cleanup
+                    const est = await navigator.storage.estimate();
+                    if (est.usage && est.usage > 0) {
+                        await navigator.storage?.persist?.();
+                    }
+                } catch { /* ignore */ }
+            }
+
             localStorage.clear();
+            // Re-estimate after clear
+            await estimateStorage();
             window.location.reload();
         }
     };
@@ -620,7 +798,11 @@ export const StorageSettings = () => {
                     size="sm"
                     rounded="full"
                     className="justify-start"
-                    onClick={clearAllThreads}
+                    onClick={() => {
+                        clearAllThreads();
+                        // Re-estimate after a moment for IndexedDB cleanup
+                        setTimeout(() => estimateStorage(), 500);
+                    }}
                 >
                     <IconTrash size={14} strokeWidth={2} />
                     Clear Chat History
@@ -646,6 +828,62 @@ export const StorageSettings = () => {
                     <IconTrash size={14} strokeWidth={2} />
                     Factory Reset
                 </Button>
+            </div>
+        </div>
+    );
+};
+
+export const ExportSettings = () => {
+    const threads = useChatStore(state => state.threads);
+
+    return (
+        <div className="flex flex-col gap-6">
+            <div className="flex flex-col">
+                <h2 className="flex items-center gap-1 text-base font-medium">Export Report</h2>
+                <p className="text-muted-foreground text-xs">
+                    Generate a full PDF report of all your conversations.
+                </p>
+            </div>
+
+            <div className="bg-secondary/30 rounded-xl border p-5">
+                <div className="flex flex-col gap-3">
+                    <h3 className="text-sm font-semibold">Full Conversation Report</h3>
+                    <p className="text-muted-foreground text-xs leading-relaxed">
+                        Exports the last 50 threads as a print-ready PDF document including:
+                    </p>
+                    <ul className="text-muted-foreground flex flex-col gap-1.5 text-xs">
+                        <li className="flex items-start gap-2">
+                            <span className="text-brand mt-0.5">✦</span>
+                            Executive summary with total chats, messages, tokens &amp; time
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <span className="text-brand mt-0.5">✦</span>
+                            Full chat history — every prompt and AI response
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <span className="text-brand mt-0.5">✦</span>
+                            Model used per conversation
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <span className="text-brand mt-0.5">✦</span>
+                            Token counts and elapsed time per thread
+                        </li>
+                        <li className="flex items-start gap-2">
+                            <span className="text-brand mt-0.5">✦</span>
+                            Clickable table of contents / index
+                        </li>
+                    </ul>
+
+                    <div className="border-border mt-2 border-t pt-4">
+                        <ExportReportButton />
+                    </div>
+
+                    {threads.length === 0 && (
+                        <p className="text-muted-foreground mt-2 text-xs">
+                            No conversations to export yet. Start chatting to generate data.
+                        </p>
+                    )}
+                </div>
             </div>
         </div>
     );

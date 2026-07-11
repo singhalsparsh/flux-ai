@@ -4,6 +4,7 @@ export * from './code-block/code-block';
 export * from './command-search';
 export * from './download-output';
 export * from './environmental-impact';
+export * from './export-report';
 export * from './error-boundary';
 export * from './error-placeholder';
 export * from './exmaple-prompts';

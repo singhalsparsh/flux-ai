@@ -3,9 +3,26 @@ import { CoreMessage } from 'ai';
 import { ProviderEnumType } from './providers';
 
 export enum ModelEnum {
+    // Mistral
     Mistral_Small = 'mistral-small-latest',
     Mistral_Large = 'mistral-large-latest',
     Codestral = 'codestral-latest',
+    // OpenAI
+    GPT_4o_Mini = 'gpt-4o-mini',
+    GPT_4o = 'gpt-4o',
+    O4_Mini = 'o4-mini',
+    // Anthropic
+    Claude_3_5_Sonnet = 'claude-3-5-sonnet-20241022',
+    Claude_3_7_Sonnet = 'claude-3-7-sonnet-20250219',
+    // Google
+    Gemini_2_Flash = 'gemini-2.0-flash',
+    // DeepSeek
+    Deepseek_R1 = 'deepseek-reasoner',
+    Deepseek_V3 = 'deepseek-chat',
+    // Together
+    Llama_4_Scout = 'meta-llama/Llama-4-Scout-17B-16E-Instruct',
+    // NVIDIA
+    Llama_3_1_NVIDIA = 'nvidia/llama-3.1-nemotron-ultra-253b-v1',
 }
 
 export type Model = {
@@ -17,6 +34,7 @@ export type Model = {
 };
 
 export const models: Model[] = [
+    // ── Mistral ──────────────────────────────────────────────
     {
         id: ModelEnum.Mistral_Small,
         name: 'Mistral Small',
@@ -38,6 +56,74 @@ export const models: Model[] = [
         maxTokens: 32768,
         contextWindow: 32768,
     },
+    // ── OpenAI ───────────────────────────────────────────────
+    {
+        id: ModelEnum.GPT_4o_Mini,
+        name: 'GPT-4o Mini',
+        provider: 'openai',
+        maxTokens: 16384,
+        contextWindow: 128000,
+    },
+    {
+        id: ModelEnum.GPT_4o,
+        name: 'GPT-4o',
+        provider: 'openai',
+        maxTokens: 16384,
+        contextWindow: 128000,
+    },
+    {
+        id: ModelEnum.O4_Mini,
+        name: 'o4-mini',
+        provider: 'openai',
+        maxTokens: 100000,
+        contextWindow: 200000,
+    },
+    // ── Anthropic ────────────────────────────────────────────
+    {
+        id: ModelEnum.Claude_3_5_Sonnet,
+        name: 'Claude 3.5 Sonnet',
+        provider: 'anthropic',
+        maxTokens: 8192,
+        contextWindow: 200000,
+    },
+    {
+        id: ModelEnum.Claude_3_7_Sonnet,
+        name: 'Claude 3.7 Sonnet',
+        provider: 'anthropic',
+        maxTokens: 8192,
+        contextWindow: 200000,
+    },
+    // ── Google Gemini ────────────────────────────────────────
+    {
+        id: ModelEnum.Gemini_2_Flash,
+        name: 'Gemini 2.0 Flash',
+        provider: 'gemini',
+        maxTokens: 8192,
+        contextWindow: 1048576,
+    },
+    // ── DeepSeek ─────────────────────────────────────────────
+    {
+        id: ModelEnum.Deepseek_R1,
+        name: 'DeepSeek R1',
+        provider: 'deepseek',
+        maxTokens: 8192,
+        contextWindow: 65536,
+    },
+    {
+        id: ModelEnum.Deepseek_V3,
+        name: 'DeepSeek V3',
+        provider: 'deepseek',
+        maxTokens: 8192,
+        contextWindow: 65536,
+    },
+    // ── Together ─────────────────────────────────────────────
+    {
+        id: ModelEnum.Llama_4_Scout,
+        name: 'Llama 4 Scout',
+        provider: 'together',
+        maxTokens: 16384,
+        contextWindow: 131072,
+    },
 ];
 
 export const getModelFromChatMode = (mode?: string): ModelEnum => {
@@ -48,6 +134,24 @@ export const getModelFromChatMode = (mode?: string): ModelEnum => {
             return ModelEnum.Mistral_Large;
         case ChatMode.CODESTRAL:
             return ModelEnum.Codestral;
+        case ChatMode.GPT4o_MINI:
+            return ModelEnum.GPT_4o_Mini;
+        case ChatMode.GPT4o:
+            return ModelEnum.GPT_4o;
+        case ChatMode.O4_MINI:
+            return ModelEnum.O4_Mini;
+        case ChatMode.CLAUDE_SONNET_35:
+            return ModelEnum.Claude_3_5_Sonnet;
+        case ChatMode.CLAUDE_SONNET_37:
+            return ModelEnum.Claude_3_7_Sonnet;
+        case ChatMode.GEMINI_FLASH:
+            return ModelEnum.Gemini_2_Flash;
+        case ChatMode.DEEPSEEK_R1:
+            return ModelEnum.Deepseek_R1;
+        case ChatMode.DEEPSEEK_V3:
+            return ModelEnum.Deepseek_V3;
+        case ChatMode.LLAMA4_SCOUT:
+            return ModelEnum.Llama_4_Scout;
         case ChatMode.Deep:
         case ChatMode.Pro:
         default:
@@ -69,18 +173,13 @@ export const getChatModeMaxTokens = (mode: ChatMode) => {
 };
 
 export const estimateTokensByWordCount = (text: string): number => {
-    // Simple word splitting by whitespace
     const words = text?.trim().split(/\s+/);
-
-    // Using a multiplier of 1.35 tokens per word for English text
     const estimatedTokens = Math.ceil(words.length * 1.35);
-
     return estimatedTokens;
 };
 
 export const estimateTokensForMessages = (messages: CoreMessage[]): number => {
     let totalTokens = 0;
-
     for (const message of messages) {
         if (typeof message.content === 'string') {
             totalTokens += estimateTokensByWordCount(message.content);
@@ -92,7 +191,6 @@ export const estimateTokensForMessages = (messages: CoreMessage[]): number => {
             }
         }
     }
-
     return totalTokens;
 };
 
@@ -112,28 +210,26 @@ export const trimMessageHistoryEstimated = (messages: CoreMessage[], chatMode: C
             typeof msg.content === 'string'
                 ? estimateTokensByWordCount(msg.content)
                 : Array.isArray(msg.content)
-                  ? msg.content.reduce(
+                    ? msg.content.reduce(
                         (sum, part) =>
                             part.type === 'text' ? sum + estimateTokensByWordCount(part.text) : sum,
                         0
                     )
-                  : 0;
+                    : 0;
         return { message: msg, tokens };
     });
 
     let totalTokens = messageSizes.reduce((sum, item) => sum + item.tokens, 0);
-
-    // Count tokens for the latest message
     const latestMessageTokens =
         typeof latestMessage.content === 'string'
             ? estimateTokensByWordCount(latestMessage.content)
             : Array.isArray(latestMessage.content)
-              ? latestMessage.content.reduce(
+                ? latestMessage.content.reduce(
                     (sum, part) =>
                         part.type === 'text' ? sum + estimateTokensByWordCount(part.text) : sum,
                     0
                 )
-              : 0;
+                : 0;
 
     totalTokens += latestMessageTokens;
 

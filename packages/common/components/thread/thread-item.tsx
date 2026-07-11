@@ -1,5 +1,6 @@
 import {
     CitationProvider,
+    EnvironmentalImpact,
     FollowupSuggestions,
     MarkdownContent,
     Message,
@@ -105,7 +106,7 @@ export const ThreadItem = memo(
 
                         <div ref={messageRef} className="w-full">
                             {hasAnswer && threadItem.answer?.text && (
-                                <div className="flex flex-col">
+                                <div className="glass-card flex flex-col rounded-xl p-4">
                                     <SourceGrid sources={threadItem.sources || []} />
 
                                     <MarkdownContent
@@ -124,6 +125,14 @@ export const ThreadItem = memo(
                                 </div>
                             )}
                         </div>
+                        {hasAnswer && threadItem.answer?.text && (
+                            <EnvironmentalImpact
+                                tokensUsed={Math.ceil((threadItem.answer.text?.length || 0) / 4)}
+                                elapsedMs={
+                                    threadItem.updatedAt?.getTime() - threadItem.createdAt?.getTime()
+                                }
+                            />
+                        )}
                         <QuestionPrompt threadItem={threadItem} />
                         {threadItem.error && (
                             <Alert variant="destructive">

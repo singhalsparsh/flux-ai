@@ -1,132 +1,323 @@
 # FluxAI Documentation
 
-## Overview
+> Go Deeper with AI-Powered Research & Agentic Workflows
 
-FluxAI is an AI-powered research & chat application built as a Turborepo monorepo. It supports cloud-based AI models via Mistral AI API and local models running in-browser via WebGPU (WebLLM).
+FluxAI is a full-stack AI chat application supporting Mistral AI, Local AI (browser-based WebLLM), and BYOK (Bring Your Own Key) models with multiple providers.
 
-## Project Structure
+## Table of Contents
+
+- [Architecture](#architecture)
+- [Packages](#packages)
+- [Features](#features)
+- [Components](#components)
+- [Stores](#stores)
+- [AI Models](#ai-models)
+- [API Routes](#api-routes)
+- [Environment Variables](#environment-variables)
+- [Development](#development)
+
+---
+
+## Architecture
+
+FluxAI is a **Turborepo monorepo** with 6 packages:
 
 ```
-fluxai/
-├── apps/
-│   └── web/                  # Next.js 14 web application
-│       └── app/
-│           ├── changelog/    # Changelog page
-│           ├── feedback/     # Feedback page
-│           ├── terms/        # Terms & Conditions page
-│           ├── privacy/      # Privacy Policy page
-│           ├── api/          # API routes (completion, messages, etc.)
-│           └── chat/         # Main chat interface
+flux-ai/
+├── apps/web/                Next.js 14 App Router — main application
+│   └── app/
+│       ├── changelog/       Changelog page
+│       ├── feedback/        Feedback page
+│       ├── terms/           Terms & Conditions
+│       ├── privacy/         Privacy Policy
+│       ├── api/             API routes (completion, messages, etc.)
+│       └── chat/            Main chat interface
 ├── packages/
-│   ├── ai/                   # AI models, providers, workflow engine
-│   ├── common/               # Shared React components, hooks, stores
-│   ├── orchestrator/         # Workflow orchestration engine
-│   ├── shared/               # Shared config, types, utilities
-│   ├── ui/                   # UI component library
-│   └── …                     # Other packages
-└── doc.md                    # This file
+│   ├── ai/                  AI model providers, workflow workers
+│   ├── common/              Shared React components, hooks, Zustand stores
+│   ├── prisma/              Database schema (Drizzle ORM)
+│   ├── shared/              Shared types, config, utilities
+│   ├── ui/                  Design system (Button, Dialog, Input, etc.)
+│   └── typescript-config/   Shared TS configurations
+└── turbo.json               Turborepo configuration
 ```
 
-## Available Pages
+## Packages
 
-### `/changelog` — Changelog
-Lists all releases, features, and changes in FluxAI.
+### `@repo/ui` — Design System
+Radix UI primitives wrapped with Tailwind CSS. Uses `class-variance-authority` for variants.
 
-**Source:**
-- Page: `apps/web/app/changelog/page.tsx`
-- Content: `packages/shared/config/changelog.ts`
+Key exports: `Button` (incl. `glass` variant), `Dialog`, `Input`, `Badge`, `Flex`, `DropdownMenu`, `Tooltip`, `CommandDialog`, `Kbd`, `Alert`, `Textarea`, `cn`
 
-### `/feedback` — Send Feedback
-Instructions on how to submit feedback, feature requests, and bug reports.
+### `@repo/common` — Application Logic
+React components, hooks, Zustand stores, and React context providers.
 
-**Source:**
-- Page: `apps/web/app/feedback/page.tsx`
-- Content: `packages/shared/config/feedback.ts`
+### `@repo/shared` — Shared Types & Config
+- `ChatMode` enum — all supported model identifiers
+- `ChatModeConfig` — per-mode flags (webSearch, imageUpload, retry, isAuthRequired, isNew)
+- `CHAT_MODE_CREDIT_COSTS` — credit costs per mode
+- Thread/ThreadItem types
 
-### `/terms` — Terms & Conditions
-Legal terms governing use of FluxAI — age requirements, privacy, AI output disclaimers, liability limits.
+### `@repo/ai` — AI Workers
+Web Worker for BYOK API calls (OpenAI, Anthropic, Google, DeepSeek, Together).
 
-**Source:**
-- Page: `apps/web/app/terms/page.tsx`
-- Content: `packages/shared/config/terms.ts`
+## Features
 
-### `/privacy` — Privacy Policy
-Data handling practices — local storage, third-party services, cookies, contact information.
+| Feature | Description |
+|---|---|
+| **Multi-model Chat** | Mistral, Local AI (WebGPU), GPT-4o, Claude, Gemini, DeepSeek, Llama |
+| **Local AI** | Runs entirely in-browser via WebLLM + WebGPU. No data leaves your machine. |
+| **Web Search** | Toggle web search for real-time information |
+| **Image Upload** | Attach images for multimodal models |
+| **Streaming** | Real-time SSE streaming for AI responses |
+| **Dark/Light Theme** | `next-themes` with 8 accent colors (Ocean, Emerald, Violet, Rose, Amber, Cyan, Lime, Pink) |
+| **Daily Token Limits** | 5M tokens/day for unregistered users on Local AI |
+| **Keyboard Shortcuts** | `⌘K` — command search palette |
+| **Mobile Sidebar** | Vaul drawer triggered by floating glass button (top-left) |
+| **Liquid Glass UI** | Apple-style frosted glass design system (4 tiers: glass, glass-strong, glass-card, glass-ultra) |
+| **BYOK** | Bring your own API key — use any supported provider |
+| **Grammar Check** | LanguageTool integration for AI responses |
+| **Environmental Impact** | Shows energy/water/cost per AI response with animated counters |
+| **Completion Sound** | Subtle pop sound (Web Audio API) when generation finishes |
+| **Export Report** | Full PDF report of all conversations |
+| **Storage Management** | Clear chat history, model cache, factory reset |
+| **MCP Tools** | Model Context Protocol tool integration |
 
-**Source:**
-- Page: `apps/web/app/privacy/page.tsx`
-- Content: `packages/shared/config/privacy.ts`
+## Components
+
+### Layout
+| Component | File | Description |
+|---|---|---|
+| `RootLayout` | `layout/root.tsx` | Main layout — sidebar, mobile drawer, glass container |
+| `SideDrawer` | `layout/root.tsx` | Animated side panel for thread details/steps |
+| `Sidebar` | `side-bar.tsx` | Full sidebar with thread groups, user profile, search |
+
+### Chat Input
+| Component | File | Description |
+|---|---|---|
+| `ChatInput` | `chat-input/input.tsx` | Main input with editor, image upload, mode selector |
+| `ChatEditor` | `chat-input/chat-editor.tsx` | Tiptap rich text editor |
+| `ChatModeButton` | `chat-input/chat-actions.tsx` | Dropdown for Smart/BYOK/Local mode switching |
+| `WebSearchButton` | `chat-input/chat-actions.tsx` | Toggle web search |
+| `SendStopButton` | `chat-input/chat-actions.tsx` | Animated send/stop button |
+
+### Thread
+| Component | File | Description |
+|---|---|---|
+| `ThreadItem` | `thread/thread-item.tsx` | Single message with answer, sources, steps, followups |
+| `MarkdownContent` | (internal) | Rendered markdown with Shiki syntax highlighting |
+
+### Dialogs
+| Component | File | Description |
+|---|---|---|
+| `SettingsModal` | `settings-modal.tsx` | Tabbed settings: Customize, Theme, Usage, API Keys, Local AI, Storage, Export |
+| `CommandSearch` | `command-search.tsx` | `⌘K` palette — search threads, actions, navigate |
+| `IntroDialog` | `intro-dialog.tsx` | First-time user onboarding |
+
+## Stores
+
+All stores use Zustand. `persist` middleware writes to localStorage where noted.
+
+| Store | File | Persists | Purpose |
+|---|---|---|---|
+| `useChatStore` | `chat.store.ts` | localStorage + IndexedDB | Threads, messages, editor, credits |
+| `useAppStore` | `app.store.ts` | — | UI state (sidebar, settings, active tab) |
+| `useApiKeysStore` | `api-keys.store.ts` | localStorage | Provider API keys (multi-key per provider) |
+| `useLocalAIStore` | `local-ai.store.ts` | localStorage(partial) | Model downloads, loaded model, RAM estimate |
+| `useDailyTokenStore` | `daily-token.store.ts` | localStorage | 5M token/day counter for unregistered users |
+| `useMcpToolsStore` | `mcp-tools.store.ts` | localStorage | MCP tool configurations |
 
 ## AI Models
 
-### Cloud API Models (Mistral AI)
-- **Mistral Small** — Fast, lightweight for everyday tasks
-- **Mistral Large** — Powerful, complex reasoning
-- **Codestral** — Code generation & programming tasks
+### Chat Mode Matrix
 
-### Local Models (WebGPU / WebLLM)
-Local models run entirely in the browser using WebGPU. No data leaves your machine.
+| Mode | Type | Auth Required | Credits | Cost |
+|---|---|---|---|---|
+| Deep Research | Workflow | Yes | 10 | Server |
+| Pro Search | Workflow | Yes | 5 | Server |
+| Mistral Small | API | Yes | 2 | Server |
+| Mistral Large | API | Yes | 4 | Server |
+| Codestral | API | Yes | 3 | Server |
+| **Local AI** | **Browser** | **No** | **0** | **Free** |
+| GPT-4o Mini | BYOK | No | 0 | User key |
+| GPT-4o | BYOK | No | 0 | User key |
+| o4-mini | BYOK | No | 0 | User key |
+| Claude 3.5 Sonnet | BYOK | No | 0 | User key |
+| Claude 3.7 Sonnet | BYOK | No | 0 | User key |
+| Gemini 2.0 Flash | BYOK | No | 0 | User key |
+| DeepSeek R1/V3 | BYOK | No | 0 | User key |
+| Llama 4 Scout | BYOK | No | 0 | User key |
 
-**Small Tier** (1-2 GB RAM):
-| Model | RAM | Use Case |
-|-------|-----|----------|
-| Qwen2 0.5B | 1 GB | Quick Q&A, basic chat |
-| Qwen2 1.5B | 1.5 GB | Light chat, summarization |
-| Phi-3 Mini | 2 GB | Code, reasoning |
-| Gemma 2 2B | 1.5 GB | Creative writing |
-| StableLM 2 1.6B | 1.5 GB | Conversational AI |
-| Qwen2.5-1.5B | 1.5 GB | General chat |
+### Local AI Tier Guide
 
-**Medium Tier** (4-6 GB RAM):
-| Model | RAM | Use Case |
-|-------|-----|----------|
-| Qwen2 7B | 4 GB | Complex reasoning |
-| Mistral 7B v0.3 | 4 GB | General chat, coding |
-| Hermes 2 Pro Mistral 7B | 4 GB | Function calling |
-| Gemma 2 9B | 5 GB | Technical tasks |
-| Llama 3.1 8B | 5 GB | Instruction following |
-| Qwen2.5-7B | 4 GB | Advanced reasoning |
+| Tier | RAM | Example Models |
+|---|---|---|
+| **Small** | 1-2 GB | Qwen2 0.5B, Phi-3 Mini, Gemma 2 2B |
+| **Medium** | 4-6 GB | Qwen2 7B, Mistral 7B, Llama 3.1 8B |
+| **Large** | 6-12 GB | Qwen3 8B, Phi-4 Mini, Llama 3.1 70B (q3) |
+| **Ultra** | 8-16 GB | Llama 3 70B (q3), Qwen3.5 9B |
 
-**Large Tier** (6-24 GB RAM):
-| Model | RAM | Use Case |
-|-------|-----|----------|
-| Qwen3 8B | 6 GB | Advanced coding |
-| Phi-4 Mini | 6 GB | Complex reasoning |
-| Llama 3.1 70B | 24 GB | Expert-level tasks |
+### Chat Mode Dropdown
+- **SMART** — Mistral models (always available, requires login)
+- **BYOK** — Third-party models (requires API key in Settings, shown on `/chat` page)
+- **Local** — Shows currently loaded model name; click to load/unload
 
-**Ultra Tier** (8+ GB RAM):
-| Model | RAM | Use Case |
-|-------|-----|----------|
-| Llama 3 70B | 28 GB | Ultra-demanding tasks |
-| Qwen3.5-9B | 8 GB | Near-top-tier results |
+## CSS Theming
 
-## Key Features
+CSS custom properties in `apps/web/app/globals.css`:
 
-- **Multi-mode chat**: Deep Research, Pro Search, Mistral models, Local AI
-- **Local AI inference**: Run models offline via WebGPU
-- **API key management**: Bring your own Mistral API key
-- **Web search**: Optional web augmentation for responses
-- **Streaming responses**: Real-time streaming of AI responses
-- **Chat history**: IndexedDB-based local storage
-- **Credit system**: Daily usage limits for unauthenticated users
+```
+--background  / --foreground
+--brand       / --brand-foreground
+--accent      / --accent-foreground
+--muted       / --muted-foreground
+--border      / --hard / --soft
+--ring        / --radius
+```
+
+### Glass Utility Classes
+
+| Class | Blur | Opacity (light) | Use |
+|---|---|---|---|
+| `.glass` | 24px | 45% | Subtle frosted backgrounds |
+| `.glass-strong` | 40px | 60% | Main containers, sidebar |
+| `.glass-card` | 20px | 35% | Cards, answer areas |
+| `.glass-ultra` | 56px | 75% | Dialogs, modals, floating buttons |
+
+Dark mode classes are auto-applied via `.dark .glass-*` selectors.
+
+### Accent Colors
+8 presets in Settings → Theme: Ocean (default), Emerald, Violet, Rose, Amber, Cyan, Lime, Pink. Each sets `--brand`, `--accent` CSS custom properties at runtime.
+
+## Mobile Support
+
+- **Sidebar**: Vaul drawer (`direction="left"`) triggered by floating glass button in top-left corner
+- **Button behavior**: Hidden when sidebar is open, reappears when closed (AnimatePresence)
+- **Desktop**: Button hidden via `lg:hidden`
+
+## Unregistered User Limits
+
+| Mode | Limit |
+|---|---|
+| Local AI | 5M tokens/day (localStorage counter, resets daily) |
+| Mistral / Workflows | Blocked (redirects to sign-in) |
+| BYOK | Available (user provides own key) |
+
+## API Routes
+
+### `POST /api/completion`
+SSE streaming for Mistral AI and workflow modes.
+
+**Request:** `{ mode, prompt, threadId, messages, threadItemId, customInstructions?, webSearch?, showSuggestions?, mcpConfig? }`
+
+**Response:** SSE stream with events: `steps`, `sources`, `answer`, `error`, `status`, `suggestions`, `done`
+
+### `POST /api/feedback`
+Anonymous feedback submission (`{ feedback: string }`).
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `MISTRAL_API_KEY` | Mistral AI API key for server-side requests |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk auth publishable key |
-| `CLERK_SECRET_KEY` | Clerk auth secret key |
-| `KV_URL` / `KV_TOKEN` | Vercel KV for credit tracking |
+| Variable | Required | Description |
+|---|---|---|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Yes | Clerk auth publishable key |
+| `CLERK_SECRET_KEY` | Yes | Clerk auth secret key |
+| `MISTRAL_API_KEY` | Yes | Mistral AI API key |
+| `SERPER_API_KEY` | Yes | Web search API (Serper.dev) |
+| `UPSTASH_REDIS_REST_URL` | No | Rate limiting (MCP sessions) |
+| `UPSTASH_REDIS_REST_TOKEN` | No | Rate limiting token |
+| `NEXT_PUBLIC_POSTHOG_KEY` | No | Product analytics |
+| `NEXT_PUBLIC_POSTHOG_HOST` | No | PostHog instance |
+| `PLAUSIBLE_DOMAIN` | No | Analytics |
 
-## Tech Stack
+## Development
 
+### Prerequisites
+- **Node.js** ≥ 18 (tested on 22+)
+- **Bun** (package manager)
+- **WebGPU browser** (Chrome 113+, Edge 113+) for Local AI
+
+### Quick Start
+
+```bash
+# Clone
+git clone https://github.com/singhalsparsh/flux-ai.git
+cd flux-ai
+
+# Install
+bun install
+
+# Environment
+cp apps/web/.env.example apps/web/.env.local
+# Edit .env.local with your keys
+
+# Dev server
+bun run dev
+
+# Build
+bun run build
+
+# Type check
+cd packages/common && bunx tsc --noEmit
+```
+
+### Tech Stack
 - **Framework**: Next.js 14 (App Router)
-- **AI**: AI SDK (`ai`), `@ai-sdk/openai` (Mistral-compatible)
-- **State**: Zustand + Immer + Persist
-- **UI**: Tailwind CSS, Radix UI, Framer Motion
-- **Local AI**: `@mlc-ai/web-llm` (WebGPU inference)
-- **Auth**: Clerk
-- **Database**: Dexie (IndexedDB), Prisma (server)
-- **Storage**: Vercel KV (credit tracking)
-- **Monorepo**: Turborepo / Bun
+- **Language**: TypeScript (strict)
+- **Monorepo**: Turborepo + Bun
+- **Auth**: Clerk (multi-provider SSO)
+- **State**: Zustand + immer + persist
+- **Styling**: Tailwind CSS 3
+- **Animations**: Framer Motion
+- **Local AI**: `@mlc-ai/web-llm` v0.2.84
+- **Icons**: Tabler Icons
+- **Notifications**: Sonner
+
+---
+
+## Vercel Free Tier Hosting
+
+FluxAI is designed to work on **Vercel's Hobby (free) plan** with zero-cost services.
+
+### What Works on Free Tier
+
+| Service | Cost | Notes |
+|---|---|---|
+| **Next.js hosting** | Free | All routes, SSR, SSG |
+| **Local AI** (WebLLM) | Free | Runs entirely in-browser via WebGPU |
+| **BYOK models** | Free | Web Worker calls provider APIs from browser |
+| **Mistral API** | Free via API key | Server-side streaming (basic chat fits 10s timeout) |
+| **Clerk auth** | Free (up to 10k users) | External service, just needs env vars |
+| **Vercel KV** | Free | Credit tracking (30k req/day) |
+
+### Removed Dependencies (no longer needed)
+
+- **PostgreSQL / Prisma** — Removed. Feedback is stored client-side.
+- **Sentry** — Removed. Errors are logged to console.
+- **Supabase / PGlite / Drizzle** — Removed (unused).
+- **DATABASE_URL** — No longer required.
+
+### Environment Variables
+
+Only these are needed for full functionality:
+
+| Variable | Required | Source |
+|---|---|---|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Yes | [Clerk Dashboard](https://dashboard.clerk.com) |
+| `CLERK_SECRET_KEY` | Yes | Clerk Dashboard |
+| `MISTRAL_API_KEY` | Yes | [Mistral AI Console](https://console.mistral.ai) |
+| `SERPER_API_KEY` | Yes | [Serper.dev](https://serper.dev) (web search) |
+| `JINA_API_KEY` | No | Jina AI (page reading, optional) |
+| `NEXT_PUBLIC_POSTHOG_KEY` | No | PostHog analytics |
+| `KV_URL` / `KV_REST_API_URL` | No | Upstash Redis (MCP sessions, optional) |
+
+### Deploy to Vercel
+
+1. Push to GitHub
+2. Import repo in Vercel
+3. Set the required env vars above
+4. Deploy — no build scripts or DB setup needed
+
+---
+
+*Built with passion by [Sparsh Singhal](https://github.com/singhalsparsh)*  
+*FluxAI — MIT License*

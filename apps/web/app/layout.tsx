@@ -2,6 +2,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { RootLayout } from '@repo/common/components';
 import { ReactQueryProvider, RootProvider } from '@repo/common/context';
 import { TooltipProvider, cn } from '@repo/ui';
+import { ThemeProvider } from 'next-themes';
 import { GeistMono } from 'geist/font/mono';
 import type { Viewport } from 'next';
 import { Metadata } from 'next';
@@ -103,20 +104,37 @@ export default function ParentLayout({
             </head>
             <body>
                 {/* <PostHogProvider> */}
-                <ClerkProvider>
+                <ClerkProvider
+                    appearance={{
+                        layout: {
+                            socialButtonsPlacement: 'bottom',
+                            socialButtonsVariant: 'iconButton',
+                        },
+                        variables: {
+                            colorPrimary: '#000000',
+                        },
+                        elements: {
+                            footer: 'hidden',
+                            footerAction: 'hidden',
+                            footerActionText: 'hidden',
+                            footerActionLink: 'hidden',
+                            card: '[&_.cl-internal-wkkub3]:hidden', // hides clerk branding
+                        },
+                    }}
+                >
                     <RootProvider>
-                        {/* <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-          > */}
-                        <TooltipProvider>
-                            <ReactQueryProvider>
-                                <RootLayout>{children}</RootLayout>
-                            </ReactQueryProvider>
-                        </TooltipProvider>
-                        {/* </ThemeProvider> */}
+                        <ThemeProvider
+                            attribute="class"
+                            defaultTheme="dark"
+                            enableSystem
+                            disableTransitionOnChange
+                        >
+                            <TooltipProvider>
+                                <ReactQueryProvider>
+                                    <RootLayout>{children}</RootLayout>
+                                </ReactQueryProvider>
+                            </TooltipProvider>
+                        </ThemeProvider>
                     </RootProvider>
                 </ClerkProvider>
                 {/* </PostHogProvider> */}

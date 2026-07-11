@@ -32,7 +32,7 @@ import moment from 'moment';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
 
-export const Sidebar = () => {
+export const Sidebar = ({ forceOpen }: { forceOpen?: boolean }) => {
     const { threadId: currentThreadId } = useParams();
     const pathname = usePathname();
     const { setIsCommandSearchOpen } = useRootContext();
@@ -48,7 +48,7 @@ export const Sidebar = () => {
     const { openUserProfile, signOut, redirectToSignIn } = useClerk();
     const clearAllThreads = useChatStore(state => state.clearAllThreads);
     const setIsSidebarOpen = useAppStore(state => state.setIsSidebarOpen);
-    const isSidebarOpen = useAppStore(state => state.isSidebarOpen);
+    const isSidebarOpen = useAppStore(state => state.isSidebarOpen) || forceOpen;
     const setIsSettingsOpen = useAppStore(state => state.setIsSettingsOpen);
     const { push } = useRouter();
     const groupedThreads: Record<string, Thread[]> = {
@@ -123,7 +123,7 @@ export const Sidebar = () => {
     return (
         <div
             className={cn(
-                'relative bottom-0 left-0 top-0 z-[50] flex h-[100dvh] flex-shrink-0 flex-col  py-2 transition-all duration-200',
+                'glass-strong relative bottom-0 left-0 top-0 z-[50] flex h-[100dvh] flex-shrink-0 flex-col py-2 transition-all duration-200',
                 isSidebarOpen ? 'top-0 h-full w-[230px]' : 'w-[50px]'
             )}
         >
@@ -174,7 +174,7 @@ export const Sidebar = () => {
                                 size={isSidebarOpen ? 'sm' : 'icon-sm'}
                                 variant="bordered"
                                 rounded="lg"
-                                tooltip={isSidebarOpen ? undefined : 'New Thread'}
+                                tooltip={isSidebarOpen ? undefined : 'New Chat'}
                                 tooltipSide="right"
                                 className={cn(isSidebarOpen && 'relative w-full', 'justify-center')}
                             >
@@ -192,7 +192,7 @@ export const Sidebar = () => {
                             className={cn(isSidebarOpen && 'relative w-full', 'justify-center')}
                         >
                             <IconPlus size={16} strokeWidth={2} className={cn(isSidebarOpen)} />
-                            {isSidebarOpen && 'New Thread'}
+                            {isSidebarOpen && 'New Chat'}
                         </Button>
                     )}
                     <Button
@@ -276,7 +276,7 @@ export const Sidebar = () => {
                             renderEmptyState: () => (
                                 <div className="border-hard flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed p-2">
                                     <p className="text-muted-foreground text-xs opacity-50">
-                                        No pinned threads
+                                        No pinned chats
                                     </p>
                                 </div>
                             ),

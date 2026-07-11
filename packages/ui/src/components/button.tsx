@@ -25,6 +25,7 @@ const buttonVariants = cva(
                 ghost: 'hover:bg-quaternary text-muted-foreground opacity-100 hover:text-foreground',
                 'ghost-bordered':
                     'hover:bg-background hover:shadow-subtle-xs text-muted-foreground opacity-100 hover:text-foreground',
+                glass: 'bg-background/35 backdrop-blur-3xl saturate-[1.2] border border-border/20 shadow-subtle-xs text-muted-foreground opacity-100 hover:bg-background/55 hover:text-foreground hover:shadow-subtle-sm [&>svg]:text-foreground',
                 link: 'text-muted-foreground underline-offset-4 hover:underline h-auto decoration-border',
                 text: 'p-0 text-xs',
             },

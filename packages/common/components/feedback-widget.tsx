@@ -41,7 +41,7 @@ export const FeedbackWidget = () => {
     }
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex items-end justify-end">
+        <div className="fixed bottom-20 right-4 z-50 flex items-end justify-end lg:bottom-6 lg:right-6">
             <AnimatePresence mode="wait">
                 {!isOpen ? (
                     <motion.button

@@ -1,7 +1,7 @@
 'use client';
 import { cn } from '@repo/ui';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // Rough estimates based on AI model inference
 // Per 1000 tokens:
@@ -18,6 +18,60 @@ export type ImpactData = {
     tokensUsed: number;
     elapsedMs: number;
 };
+
+function AnimatedNumber({ value, suffix, decimals = 3 }: { value: number; suffix: string; decimals?: number }) {
+    const [display, setDisplay] = useState(0);
+    const rafRef = useRef<number | null>(null);
+    const startTime = useRef<number>(0);
+
+    useEffect(() => {
+        if (value === 0) { setDisplay(0); return; }
+        startTime.current = performance.now();
+        const duration = 1200; // total animation duration
+        const from = 0;
+
+        const animate = (now: number) => {
+            const elapsed = now - startTime.current;
+            const progress = Math.min(elapsed / duration, 1);
+            // Ease-out cubic
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = from + (value - from) * eased;
+            setDisplay(current);
+            if (progress < 1) {
+                rafRef.current = requestAnimationFrame(animate);
+            }
+        };
+
+        rafRef.current = requestAnimationFrame(animate);
+        return () => {
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        };
+    }, [value]);
+
+    return (
+        <span>
+            {display.toFixed(decimals)}{suffix}
+        </span>
+    );
+}
+
+function ImpactDot({ color, label, children }: { color: string; label: string; children: React.ReactNode }) {
+    return (
+        <motion.span
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-1.5"
+        >
+            <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 10 }}
+                className={cn('inline-block size-2.5 rounded-full', color)}
+            />
+            <span className="tabular-nums">{children}</span>
+        </motion.span>
+    );
+}
 
 export const EnvironmentalImpact = ({ tokensUsed, elapsedMs }: ImpactData) => {
     const [show, setShow] = useState(false);
@@ -38,28 +92,40 @@ export const EnvironmentalImpact = ({ tokensUsed, elapsedMs }: ImpactData) => {
     return (
         <AnimatePresence>
             <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                initial={{ opacity: 0, height: 0, y: -10 }}
+                animate={{ opacity: 1, height: 'auto', y: 0 }}
                 exit={{ opacity: 0, height: 0 }}
-                className="flex flex-row items-center gap-3 px-4 py-2"
+                transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+                className="glass-card flex flex-row items-center gap-3 rounded-xl px-4 py-2"
             >
-                <div className="flex flex-row items-center gap-4 text-[10px] text-muted-foreground/60">
-                    <span className="flex items-center gap-1">
-                        <span className="inline-block size-2 rounded-full bg-yellow-400" />
-                        {electricity.toFixed(3)} Wh
-                    </span>
-                    <span className="flex items-center gap-1">
-                        <span className="inline-block size-2 rounded-full bg-blue-400" />
-                        {water.toFixed(3)}L water
-                    </span>
-                    <span className="flex items-center gap-1">
-                        <span className="inline-block size-2 rounded-full bg-green-400" />
-                        ~${cost.toFixed(5)}
-                    </span>
-                    <span className="flex items-center gap-1 text-muted-foreground/40">
-                        ⏱ {elapsed}s
-                    </span>
-                </div>
+                <motion.div
+                    className="flex flex-row items-center gap-4 text-[10px] text-muted-foreground/60"
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                        visible: {
+                            transition: { staggerChildren: 0.15 },
+                        },
+                    }}
+                >
+                    <ImpactDot color="bg-yellow-400" label="Energy">
+                        ⚡ <AnimatedNumber value={electricity} suffix=" Wh" /> <span className="text-muted-foreground/40">energy</span>
+                    </ImpactDot>
+                    <ImpactDot color="bg-blue-400" label="Water">
+                        💧 <AnimatedNumber value={water} suffix=" L" /> <span className="text-muted-foreground/40">water</span>
+                    </ImpactDot>
+                    <ImpactDot color="bg-green-400" label="Cost">
+                        💰 ~$<AnimatedNumber value={cost} suffix="" decimals={5} /> <span className="text-muted-foreground/40">server cost</span>
+                    </ImpactDot>
+                    <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.6 }}
+                        className="flex items-center gap-1 text-muted-foreground/40"
+                    >
+                        ⏱ <AnimatedNumber value={parseFloat(elapsed)} suffix="s" decimals={1} /> <span className="text-muted-foreground/40">elapsed</span>
+                    </motion.span>
+                </motion.div>
             </motion.div>
         </AnimatePresence>
     );

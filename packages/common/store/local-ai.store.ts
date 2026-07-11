@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
-interface StreamingState {
+export interface StreamingState {
     isStreaming: boolean;
     currentText: string;
     error: string | null;
@@ -14,6 +14,7 @@ type LocalAIState = {
     isModelLoaded: boolean;
     isGenerating: boolean;
     isLoading: boolean;
+    downloadProgress: number;
     error: string | null;
     selectedModelId: string | null;
     estimatedRam: number;
@@ -26,6 +27,7 @@ type LocalAIActions = {
     setIsModelLoaded: (loaded: boolean) => void;
     setIsGenerating: (generating: boolean) => void;
     setIsLoading: (loading: boolean) => void;
+    setDownloadProgress: (progress: number) => void;
     setError: (error: string | null) => void;
     setSelectedModelId: (id: string | null) => void;
     setEstimatedRam: (ram: number) => void;
@@ -45,6 +47,7 @@ export const useLocalAIStore = create<LocalAIState & LocalAIActions>()(
             isModelLoaded: false,
             isGenerating: false,
             isLoading: false,
+            downloadProgress: 0,
             error: null,
             selectedModelId: null,
             estimatedRam: 0,
@@ -64,6 +67,9 @@ export const useLocalAIStore = create<LocalAIState & LocalAIActions>()(
 
             setIsLoading: (loading) =>
                 set({ isLoading: loading }),
+
+            setDownloadProgress: (progress) =>
+                set({ downloadProgress: progress }),
 
             setError: (error) =>
                 set({ error }),
@@ -121,7 +127,6 @@ export const useLocalAIStore = create<LocalAIState & LocalAIActions>()(
                 downloadedModels: state.downloadedModels,
                 estimatedRam: state.estimatedRam,
                 loadedModelId: state.loadedModelId,
-                isModelLoaded: state.isModelLoaded,
             }),
         }
     )

@@ -4,15 +4,12 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
-        "build": "cd ../../packages/prisma && bun prisma generate && cd ../../apps/web && next build",
+        "build": "next build",
         "start": "next start",
-        "prepare": "husky",
-        "generate": "bunx drizzle-kit generate"
+        "prepare": "husky"
     },
     "dependencies": {
         "@clerk/nextjs": "^6.12.3",
-        "@electric-sql/pglite": "0.2.13",
-        "@electric-sql/pglite-repl": "^0.2.15",
         "@hotjar/browser": "^1.0.9",
         "@langchain/community": "^0.2.1",
         "@langchain/core": "^0.1.62",
@@ -37,10 +34,6 @@
         "@repo/common": "*",
         "@repo/shared": "*",
         "@repo/ui": "*",
-        "@sentry/nextjs": "^8",
-        "@sentry/node": "^9.11.0",
-        "@supabase/ssr": "^0.4.0",
-        "@supabase/supabase-js": "^2.44.4",
         "@tabler/icons-react": "^3.30.0",
         "@tanstack/react-query": "^5.40.0",
         "@tiptap/extension-document": "^2.5.5",
@@ -141,7 +134,6 @@
         "@types/turndown": "^5.0.4",
         "@types/uuid": "^10.0.0",
         "autoprefixer": "^10.4.20",
-        "drizzle-kit": "^0.24.2",
         "husky": "^9.1.4",
         "postcss": "^8.5.3",
         "postgres": "^3.4.4",

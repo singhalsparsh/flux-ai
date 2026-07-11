@@ -121,7 +121,7 @@ export const ChatInput = ({
                 <Flex
                     direction="col"
                     className={cn(
-                        'bg-background border-hard/50 shadow-subtle-sm relative z-10 w-full rounded-xl border'
+                        'glass-card border-hard/50 shadow-subtle-sm relative z-10 w-full rounded-xl border'
                     )}
                 >
                     <ImageDropzoneRoot dropzoneProps={dropzonProps}>
