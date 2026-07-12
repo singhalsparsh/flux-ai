@@ -6,7 +6,15 @@
         "dev": "next dev",
         "build": "next build",
         "start": "next start",
-        "prepare": "husky"
+        "prepare": "husky",
+        "pages:build": "DEPLOY_TARGET=cloudflare npx @cloudflare/next-on-pages",
+        "pages:dev": "npx wrangler pages dev .vercel/output/static --compatibility-flags=\"nodejs_compat\"",
+        "pages:deploy": "npx wrangler pages deploy .vercel/output/static",
+        "pages:preview": "npx wrangler pages deploy .vercel/output/static --branch=preview"
+    },
+    "cloudflare": {
+        "compatibility_flags": ["nodejs_compat"],
+        "pages_build_output_dir": ".vercel/output/static"
     },
     "dependencies": {
         "@clerk/nextjs": "^6.12.3",
@@ -123,6 +131,7 @@
         "zustand": "^4.5.4"
     },
     "devDependencies": {
+        "@cloudflare/next-on-pages": "^1",
         "@repo/tailwind-config": "*",
         "@repo/typescript-config": "*",
         "@tailwindcss/typography": "^0.5.13",
@@ -141,6 +150,8 @@
         "prettier-plugin-tailwindcss": "^0.6.5",
         "tailwindcss": "3",
         "typescript": "^5",
+        "vercel": "^41.0.0",
+        "wrangler": "^4.0.0",
         "yarn": "^1.22.22"
     }
 }

@@ -41,3 +41,7 @@ tsconfig.tsbuildinfo
 
 # claude code
 .claude/
+
+# Cloudflare / wrangler
+.wrangler/
+*.local.toml  # local overrides only

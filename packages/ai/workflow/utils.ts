@@ -1,5 +1,5 @@
 import { TaskParams, TypedEventEmitter } from '@repo/orchestrator';
-import { Geo } from '@vercel/functions';
+import { Geo } from '@repo/shared/cloudflare';
 import {
     CoreMessage,
     extractReasoningMiddleware,

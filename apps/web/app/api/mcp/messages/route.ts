@@ -1,7 +1,7 @@
 // pages/api/mcp-proxy/[server]/sse.ts
 import { Redis } from '@upstash/redis';
 import { NextRequest, NextResponse } from 'next/server';
-import fetch from 'node-fetch';
+// node-fetch not needed on Cloudflare Workers (global fetch available) or Node 18+
 
 const redis = new Redis({
     url: process.env.KV_REST_API_URL,
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         const requestUrl = new URL(request.nextUrl.pathname, serverURL);
         requestUrl.search = request.nextUrl.search;
 
-        const response = await fetch(requestUrl, {
+        const response = await globalThis.fetch(requestUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

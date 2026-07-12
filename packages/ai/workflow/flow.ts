@@ -5,7 +5,7 @@ import {
     WorkflowConfig,
 } from '@repo/orchestrator';
 import { ChatMode } from '@repo/shared/config';
-import { Geo } from '@vercel/functions';
+import { Geo } from '@repo/shared/cloudflare';
 import { CoreMessage } from 'ai';
 import { Langfuse } from 'langfuse';
 import {

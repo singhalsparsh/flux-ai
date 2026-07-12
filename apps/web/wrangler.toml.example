@@ -1,0 +1,62 @@
+# Cloudflare Pages configuration for FluxAI
+# Compatible with @cloudflare/next-on-pages deployment
+#
+# Usage:
+#   npx @cloudflare/next-on-pages
+#   npx wrangler pages deploy .vercel/output/static
+#
+name = "flux-ai"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# ============================================
+# Pages configuration (static + functions)
+# ============================================
+pages_build_output_dir = ".vercel/output/static"
+
+# ============================================
+# Bindings for Cloudflare Workers / Pages Functions
+# ============================================
+
+# KV Namespace for session state and credit tracking
+# Create: wrangler kv:namespace create "FLUXAI_KV"
+# Then uncomment and add the ID below:
+# [[kv_namespaces]]
+# binding = "FLUXAI_KV"
+# id = "your-kv-namespace-id-here"
+
+# D1 Database for chat persistence (optional)
+# Create: wrangler d1 create fluxai-db
+# Then uncomment and add the ID below:
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "fluxai-db"
+# database_id = "your-d1-database-id-here"
+
+# AI Gateway for AI model access
+# Create: wrangler ai-gateway create fluxai-gateway
+# [[ai_gateway]]
+# binding = "AI_GATEWAY"
+# gateway_id = "fluxai-gateway"
+
+# ============================================
+# Environment Variables (set in Cloudflare Dashboard)
+# ============================================
+# These must be set via `wrangler pages secret put <KEY>` or Cloudflare Dashboard
+# [vars]
+# MISTRAL_API_KEY = ""
+# MISTRAL_API_KEY_2 = ""
+# MISTRAL_API_KEY_3 = ""
+# NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = ""
+# CLERK_SECRET_KEY = ""
+# NEXT_PUBLIC_CLERK_SIGN_IN_URL = "/sign-in"
+# NEXT_PUBLIC_CLERK_SIGN_UP_URL = "/sign-up"
+# NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL = "/chat"
+# NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL = "/chat"
+# NEXT_PUBLIC_APP_URL = "https://your-app.pages.dev"
+# FREE_CREDITS_LIMIT_REQUESTS_AUTH = "0"
+# FREE_CREDITS_LIMIT_REQUESTS_IP = "20"
+# KV_REST_API_URL = ""
+# KV_REST_API_TOKEN = ""
+# UPSTASH_REDIS_REST_URL = ""
+# UPSTASH_REDIS_REST_TOKEN = ""

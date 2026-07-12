@@ -1,10 +1,8 @@
 // pages/api/mcp-proxy/[server]/sse.ts
 import { Redis } from '@upstash/redis';
-import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import fetch from 'node-fetch';
-import { Readable } from 'stream';
-import { ReadableStream } from 'stream/web';
+// Using Web Crypto API (available globally in Cloudflare Workers and modern runtimes)
+// node-fetch not needed — global fetch() is available everywhere
 
 const redis = new Redis({
   url: process.env.KV_REST_API_URL,
@@ -38,8 +36,8 @@ export async function GET(request: NextRequest) {
   //   return NextResponse.json({ error: `MCP server '${serverName}' not found` }, { status: 404 });
   // }
 
-  // Generate a new session ID for this connection
-  const newSessionId = randomUUID();
+  // Generate a new session ID for this connection (Web Crypto API)
+  const newSessionId = crypto.randomUUID();
   
   // Store the session for later reference
   global._mcpSessions[newSessionId] = serverName;
@@ -59,47 +57,45 @@ export async function GET(request: NextRequest) {
       throw new Error('No response body from MCP server');
     }
 
-    // Convert node-fetch's body to a web-compatible ReadableStream
-    const nodeReadable = response.body as unknown as Readable;
-    
-    // Create web ReadableStream from Node.js Readable
+    // ReadableStream is available natively in Cloudflare Workers and modern runtimes
+    const webStream = response.body;
+    const reader = webStream.getReader();
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       start(controller) {
-  
-        // Handle data from the node stream
-        nodeReadable.on('data', async (chunk) => {
-          const chunkString = chunk.toString('utf-8');
-          const sessionId = chunkString.match(/sessionId=([^&]+)/)?.[1];
-
-          console.log(`Setting session ${sessionId} for server ${serverName}`);
-          await redis.set(`mcp:session:${sessionId}`, server);
-          controller.enqueue(chunk);
-        });
-        
-        nodeReadable.on('end', () => {
-          controller.close();
-          delete global._mcpSessions[newSessionId];
-          console.log(`Session ${newSessionId} closed normally`);
-        });
-        
-        nodeReadable.on('error', (err) => {
-          console.error(`Stream error for session ${newSessionId}:`, err);
-          controller.error(err);
-          delete global._mcpSessions[newSessionId];
-        });
+        const pump = async () => {
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                controller.close();
+                break;
+              }
+              const chunkString = new TextDecoder().decode(value);
+              const sessionId = chunkString.match(/sessionId=([^&]+)/)?.[1];
+              if (sessionId) {
+                console.log(`Setting session ${sessionId} for server ${serverName}`);
+                await redis.set(`mcp:session:${sessionId}`, server);
+              }
+              controller.enqueue(value);
+            }
+          } catch (err) {
+            controller.error(err);
+          } finally {
+            reader.releaseLock();
+            delete global._mcpSessions[newSessionId];
+          }
+        };
+        pump();
       },
       cancel() {
-        nodeReadable.destroy();
+        reader.cancel();
         delete global._mcpSessions[newSessionId];
         console.log(`Session ${newSessionId} canceled`);
       }
     });
-
-    // Convert stream/web ReadableStream to standard web ReadableStream
-    const transformedStream = new Response(stream as any).body;
     
-    return new NextResponse(transformedStream, {
+    return new NextResponse(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache, no-transform',
