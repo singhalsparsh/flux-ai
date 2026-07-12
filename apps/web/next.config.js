@@ -15,8 +15,10 @@ const nextConfig = {
   },
   // Disable static generation for error pages
   generateEtags: false,
-  // Use server-side rendering instead of static generation
+  // Use server-side rendering for error pages
   output: 'standalone',
+  // Skip error page generation
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
 }
 
 module.exports = nextConfig
