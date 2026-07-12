@@ -1,9 +1,9 @@
 
-<img width="1512" alt="Screenshot 2025-04-14 at 9 13 25 PM" src="https://github.com/user-attachments/assets/b89d1343-7c6f-4685-8bcf-dbcc71ce2229" />
+<img width="1512" alt="Homepage" src="https://i.ibb.co/mr3ZBcKH/web-ss.png" />
 
 ## Introduction
 
-[FluxAI](https://fluxai.app) is a sophisticated AI-powered chatbot platform that prioritizes privacy while offering powerful research and agentic capabilities. Built as a monorepo with Next.js, TypeScript, and cutting-edge AI technologies, it provides multiple specialized chat modes including Pro Search and Deep Research for in-depth analysis of complex topics.
+[FluxAI](https://ai.sparshlike.eu.org/) is a sophisticated AI-powered chatbot platform that prioritizes privacy while offering powerful research and agentic capabilities. Built as a monorepo with Next.js, TypeScript, and cutting-edge AI technologies, it provides multiple specialized chat modes including Pro Search and Deep Research for in-depth analysis of complex topics.
 
 FluxAI stands out with its workflow orchestration system and focus on privacy, storing all user data locally in the browser using IndexedDB, ensuring your conversations never leave your device.
 
@@ -24,8 +24,8 @@ FluxAI stands out with its workflow orchestration system and focus on privacy, s
 
 **Privacy-Focused**
 
-- **Local Storage**: All user data stored in browser using IndexedDB via Dexie.js
-- **No Server-Side Storage**: Chat history never leaves your device
+- **Local Storage**: All user data stored in browser.
+- **No Server-Side Storage**: Chat history never leaves your device.
 
 **Agentic Capabilities**
 - **Workflow Orchestration**: Complex task coordination via custom workflow engine
@@ -353,15 +353,15 @@ FluxAI prioritizes user privacy by storing all data locally
 
 ### Prerequisites
 
-- Ensure you have `bun` installed (recommended) or `yarn`
+- Ensure you have `bun` installed (recommended) or `yarn` or `npm`
 
 ### Installation
 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-repo/fluxai.git
-cd fluxai
+git clone https://github.com/your-repo/flux-ai.git
+cd flux-ai
 ```
 
 2. Install dependencies:
@@ -370,6 +370,8 @@ cd fluxai
 bun install
 # or
 yarn install
+# or
+npm install
 ```
 
 3. Start the development server:
@@ -378,6 +380,8 @@ yarn install
 bun dev
 # or
 yarn dev
+# or
+npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:3000`
+4. Open your browser and navigate to `http://localhost:3000/chat`
