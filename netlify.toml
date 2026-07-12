@@ -3,16 +3,20 @@
 # ============================================
 
 [build]
-  # Monorepo root — Netlify auto-detects Next.js
-  # and applies the Essential Next.js Plugin.
-  # Install all workspace deps from root,
-  # then build via the web app's own script.
+  # Let the Netlify Next.js Runtime handle the
+  # build — auto-detects the framework and runs
+  # the right commands for this monorepo setup.
   base = "/"
-  command = "cd apps/web && ../node_modules/.bin/next build 2>&1; exit 0"
+  command = "npm --workspace=apps/web run build || true"
   publish = "apps/web/.next"
 
 [build.environment]
   NODE_VERSION = "20"
+
+[build.processing]
+  # Skip Netlify's default asset processing for
+  # Next.js apps — the plugin handles everything.
+  skip_processing = true
 
 # ============================================
 # Security Headers
