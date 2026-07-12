@@ -1,8 +1,4 @@
-import { ClerkProvider } from '@clerk/nextjs';
-import { RootLayout } from '@repo/common/components';
-import { ReactQueryProvider, RootProvider } from '@repo/common/context';
-import { TooltipProvider, cn } from '@repo/ui';
-import { ThemeProvider } from 'next-themes';
+import { cn } from '@repo/ui';
 import { GeistMono } from 'geist/font/mono';
 import type { Viewport } from 'next';
 import { Metadata } from 'next';
@@ -15,6 +11,10 @@ const bricolage = Bricolage_Grotesque({
 });
 
 import './globals.css';
+
+export const dynamic = 'force-dynamic';
+
+import { Providers } from './providers';
 
 export const metadata: Metadata = {
     title: 'FluxAI - Go Deeper with AI-Powered Research & Agentic Workflows',
@@ -103,41 +103,7 @@ export default function ParentLayout({
                 ></script> */}
             </head>
             <body>
-                {/* <PostHogProvider> */}
-                <ClerkProvider
-                    appearance={{
-                        layout: {
-                            socialButtonsPlacement: 'bottom',
-                            socialButtonsVariant: 'iconButton',
-                        },
-                        variables: {
-                            colorPrimary: '#000000',
-                        },
-                        elements: {
-                            footer: 'hidden',
-                            footerAction: 'hidden',
-                            footerActionText: 'hidden',
-                            footerActionLink: 'hidden',
-                            card: '[&_.cl-internal-wkkub3]:hidden', // hides clerk branding
-                        },
-                    }}
-                >
-                    <RootProvider>
-                        <ThemeProvider
-                            attribute="class"
-                            defaultTheme="dark"
-                            enableSystem
-                            disableTransitionOnChange
-                        >
-                            <TooltipProvider>
-                                <ReactQueryProvider>
-                                    <RootLayout>{children}</RootLayout>
-                                </ReactQueryProvider>
-                            </TooltipProvider>
-                        </ThemeProvider>
-                    </RootProvider>
-                </ClerkProvider>
-                {/* </PostHogProvider> */}
+                <Providers>{children}</Providers>
             </body>
         </html>
     );
