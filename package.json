@@ -10,7 +10,7 @@
         "pages:build": "cd apps/web && bun run pages:build",
         "pages:deploy": "cd apps/web && bun run pages:deploy",
         "pages:dev": "cd apps/web && bun run pages:dev",
-        "netlify:build": "cd apps/web && npm run build; exit 0"
+        "netlify:build": "cd apps/web && ../node_modules/.bin/next build; exit 0"
     },
     "devDependencies": {
         "@cloudflare/next-on-pages": "^1.13.16",
