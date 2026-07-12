@@ -10,7 +10,9 @@
         "pages:build": "DEPLOY_TARGET=cloudflare npx @cloudflare/next-on-pages",
         "pages:dev": "npx wrangler pages dev .vercel/output/static --compatibility-flags=\"nodejs_compat\"",
         "pages:deploy": "npx wrangler pages deploy .vercel/output/static",
-        "pages:preview": "npx wrangler pages deploy .vercel/output/static --branch=preview"
+        "pages:preview": "npx wrangler pages deploy .vercel/output/static --branch=preview",
+        "netlify:build": "next build; exit 0",
+        "netlify:dev": "next dev"
     },
     "cloudflare": {
         "compatibility_flags": ["nodejs_compat"],

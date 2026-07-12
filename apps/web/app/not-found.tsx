@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { FC } from 'react';
 
+export const dynamic = 'force-dynamic';
+
 const NotFound: FC = () => {
   return (
     <div

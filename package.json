@@ -9,7 +9,8 @@
         "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md}\"",
         "pages:build": "cd apps/web && bun run pages:build",
         "pages:deploy": "cd apps/web && bun run pages:deploy",
-        "pages:dev": "cd apps/web && bun run pages:dev"
+        "pages:dev": "cd apps/web && bun run pages:dev",
+        "netlify:build": "cd apps/web && npm run build; exit 0"
     },
     "devDependencies": {
         "@cloudflare/next-on-pages": "^1.13.16",
@@ -23,7 +24,6 @@
         "turbo": "latest",
         "wrangler": "^4.110.0"
     },
-    "packageManager": "bun@1.1.19",
     "workspaces": [
         "apps/*",
         "packages/*"

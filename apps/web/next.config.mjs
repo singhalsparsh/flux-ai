@@ -1,8 +1,12 @@
+import { fileURLToPath } from 'url';
+
 /** @type {import('next').NextConfig} */
 
-// Check if building for Cloudflare Pages
+// Detect deployment target
 const isCloudflare = process.env.DEPLOY_TARGET === 'cloudflare' || process.env.CF_PAGES === '1';
+const isNetlify = process.env.NETLIFY === 'true' || process.env.NETLIFY_NEXT_PLUGIN_ENABLED === 'true';
 
+/** @type {import('next').NextConfig} */
 const nextConfig = {
     transpilePackages: ['next-mdx-remote'],
     images: {
@@ -23,6 +27,8 @@ const nextConfig = {
             'supports-color',
             // Cloudflare: mark Node.js-only packages as external
             ...(isCloudflare ? ['langchain', '@langchain/core', '@langchain/community', '@vercel/kv', 'jsdom'] : []),
+            // Netlify: mark packages that need Node.js polyfills
+            ...(isNetlify ? ['langchain', '@langchain/core', '@langchain/community', 'jsdom'] : []),
         ],
     },
     webpack: (config, options) => {
@@ -40,7 +46,15 @@ const nextConfig = {
         if (isCloudflare) {
             config.resolve.alias = {
                 ...config.resolve.alias,
-                '@vercel/functions': require.resolve('./lib/cloudflare/vercel-compat.ts'),
+                '@vercel/functions': fileURLToPath(new URL('./lib/cloudflare/vercel-compat.ts', import.meta.url)),
+            };
+        }
+
+        // Netlify: alias Vercel packages to Netlify compat layer
+        if (isNetlify) {
+            config.resolve.alias = {
+                ...config.resolve.alias,
+                '@vercel/functions': fileURLToPath(new URL('./lib/netlify/vercel-compat.ts', import.meta.url)),
             };
         }
 
@@ -53,13 +67,13 @@ const nextConfig = {
     // Cloudflare: output configuration for next-on-pages
     ...(isCloudflare ? {
         output: 'export',
-        // Disable server components that use Node.js APIs
-        // The API routes will run as Pages Functions
     } : {}),
+
+    // Netlify: let the Netlify Next.js plugin handle output
+    // No need to set output: 'standalone' or 'export' — Netlify handles it
 };
 
 // Cloudflare: wrap with @cloudflare/next-on-pages
-let config = nextConfig;
 if (isCloudflare) {
     try {
         // Dynamic import only when building for Cloudflare

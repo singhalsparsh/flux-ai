@@ -45,3 +45,7 @@ tsconfig.tsbuildinfo
 # Cloudflare / wrangler
 .wrangler/
 *.local.toml  # local overrides only
+
+# Netlify
+.netlify/
+.netlify/**

@@ -1,0 +1,27 @@
+# ============================================
+# Netlify Configuration for FluxAI
+# ============================================
+
+[build]
+  # Monorepo root — Netlify auto-detects Next.js
+  # and applies the Essential Next.js Plugin.
+  # Install all workspace deps from root,
+  # then build via the web app's own script.
+  base = "/"
+  command = "npm run netlify:build"
+  publish = "apps/web/.next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# ============================================
+# Security Headers
+# ============================================
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
