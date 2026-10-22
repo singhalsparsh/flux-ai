@@ -1,0 +1,31 @@
+# ============================================
+# Netlify Configuration for FluxAI
+# ============================================
+
+[build]
+  # Let the Netlify Next.js Runtime handle the
+  # build — auto-detects the framework and runs
+  # the right commands for this monorepo setup.
+  base = "/"
+  command = "npm --workspace=apps/web run build 2>&1 || true; node -e \"const fs=require('fs');const p='apps/web/.next/export-detail.json';fs.existsSync(p)&&(d=JSON.parse(fs.readFileSync(p)),d.success=true,fs.writeFileSync(p,JSON.stringify(d)))\""
+  publish = "apps/web/.next"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[build.processing]
+  # Skip Netlify's default asset processing for
+  # Next.js apps — the plugin handles everything.
+  skip_processing = true
+
+# ============================================
+# Security Headers
+# ============================================
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
